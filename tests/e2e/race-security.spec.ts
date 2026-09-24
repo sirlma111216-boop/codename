@@ -181,7 +181,7 @@ test('동시 확정·재전송·stale revision·이전 gameId·권한·강퇴·�
   await expect(stranger.page.getByText('이 브라우저는 이 방의 참가자가 아닙니다.')).toBeVisible();
   const opened = await stranger.page.evaluate(async (path) => {
     return await new Promise<boolean>((res) => {
-      const ws = new WebSocket(`ws://${location.host}/api/rooms/${path}/ws`);
+      const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/rooms/${path}/ws`);
       ws.onopen = () => res(true);
       ws.onerror = () => res(false);
       ws.onclose = () => res(false);

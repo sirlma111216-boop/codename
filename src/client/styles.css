@@ -469,6 +469,15 @@ a {
   max-width: 460px;
   text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
 }
+/* 심벌은 남색이라 어두운 배경에서 보이도록 종이색 받침을 둔다 */
+.emblem {
+  background: var(--parchment);
+  border-radius: 22%;
+  padding: 4px 6px;
+  box-sizing: content-box;
+  display: inline-block;
+  flex: none;
+}
 .emblem-fallback {
   display: inline-block;
   border-radius: 8px;
@@ -1223,6 +1232,8 @@ details summary {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* 배경 그림이 늦게 떠도 글자가 판과 겹쳐 보이지 않게 */
+  background: var(--navy-2);
   box-shadow: 0 20px 80px rgba(0, 0, 0, 0.6);
 }
 .finish-red {

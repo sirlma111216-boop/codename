@@ -50,6 +50,11 @@ npm run dev
 | `npm run deploy:staging` | 빌드 후 staging 배포 (`codename-staging` Worker, 데이터 분리) |
 
 처음 e2e 를 돌릴 때 Playwright 브라우저가 없으면 `npx playwright install chromium` 을 한 번 실행하세요.
+배포된 주소를 검사하려면 `E2E_BASE_URL=https://codename.sirlma.workers.dev npm run test:e2e` (로컬 서버를 띄우지 않고, 재시작 테스트는 건너뜁니다).
+
+## 배포된 주소
+
+- production: https://codename.sirlma.workers.dev
 
 ## 배포 (Cloudflare Workers)
 
