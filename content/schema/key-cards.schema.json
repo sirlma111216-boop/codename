@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "codename/content/key-cards.schema.json",
+  "title": "KeyCard[]",
+  "description": "grid 는 행 우선 25칸의 정체 배열(red/blue/bystander/assassin). 회전 전 기준 방향. 선공 팀 9, 상대 8, 시민 7, 암살자 1.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "grid", "startingTeam", "editionId", "sourceReference"],
+    "additionalProperties": false,
+    "properties": {
+      "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$" },
+      "grid": { "type": "array", "minItems": 25, "maxItems": 25, "items": { "enum": ["red", "blue", "bystander", "assassin"] } },
+      "startingTeam": { "enum": ["red", "blue"] },
+      "editionId": { "type": "string" },
+      "sourceReference": { "type": "string", "minLength": 1 }
+    }
+  }
+}

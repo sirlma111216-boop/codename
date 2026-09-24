@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "codename/content/word-cards.schema.json",
+  "title": "WordCard[]",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "faceA", "faceB", "locale", "editionId", "sourceReference"],
+    "additionalProperties": false,
+    "properties": {
+      "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$" },
+      "faceA": { "type": "string", "minLength": 1, "maxLength": 40 },
+      "faceB": { "type": ["string", "null"], "minLength": 1, "maxLength": 40 },
+      "locale": { "type": "string" },
+      "editionId": { "type": "string" },
+      "sourceReference": { "type": "string", "minLength": 1 }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "packId": "ko-original-v1",
+  "editionId": "codename-app-ko-original-v1",
+  "language": "ko-KR",
+  "title": "자체 제작 한국어 단어 (비공식)",
+  "kind": "unofficialOriginal",
+  "expectedCounts": {
+    "cards": 200,
+    "faces": 400,
+    "keys": 0
+  },
+  "sourceReferences": [
+    "이 프로젝트에서 직접 고른 일반 명사 400개 (2026-09). 원작 한국어판 단어 목록을 옮긴 것이 아니며, 앞뒤 짝도 이 프로젝트가 임의로 정했다."
+  ],
+  "validationStatus": "unofficial",
+  "checksum": "5a7b29449cde0f1129331dcafb18c91946a04ccb0094172cddf10e9f1876c610",
+  "notes": "원본 키 카드가 없으므로 이 팩으로 하는 게임은 '무작위 배치(원본 키 카드 아님)'를 쓴다. 규칙 수치(9/8/7/1)는 기본판과 같다."
+}

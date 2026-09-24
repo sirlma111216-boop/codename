@@ -1,0 +1,48 @@
+// Cloudflare Workers 설정 — 브라우저 ↔ Worker(API/WebSocket) ↔ 방별 Durable Object
+// 정적 화면·이미지(dist/client)와 실시간 서버를 한 Worker 프로젝트로 배포한다.
+// Workers Builds(GitHub 연동)를 쓸 때 대시보드의 프로젝트 이름은 아래 "name" 과 같아야 한다.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "codename",
+  "main": "src/server/index.ts",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": true,
+  "observability": { "enabled": true },
+
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    // /api/* 는 항상 Worker 가 먼저 처리한다. API 오류가 index.html 로 응답되지 않게 하기 위해서다.
+    "run_worker_first": ["/api/*"],
+    // 그 밖의 알 수 없는 화면 경로(/r/..., /join)는 SPA 진입점으로 보낸다.
+    "not_found_handling": "single-page-application"
+  },
+
+  // 방 하나 = SQLite-backed Durable Object 하나. 별도 DB 서비스 없이 방 상태를 내장 저장소에 보관한다.
+  "durable_objects": {
+    "bindings": [{ "name": "ROOMS", "class_name": "RoomDurableObject" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RoomDurableObject"] }],
+
+  // 운영 설정(카드 규칙이 아니다). 비밀값(ENTRY_PASSWORD)은 `wrangler secret put` 으로 등록한다.
+  "vars": {
+    "ROOM_TTL_HOURS": "24",
+    "HOST_GRACE_SECONDS": "180",
+    "ALLOWED_ORIGINS": ""
+  },
+
+  "env": {
+    // staging 은 별도 Worker(codename-staging) 이므로 Durable Object 네임스페이스와 데이터가 production 과 분리된다.
+    "staging": {
+      "name": "codename-staging",
+      "durable_objects": {
+        "bindings": [{ "name": "ROOMS", "class_name": "RoomDurableObject" }]
+      },
+      "vars": {
+        "ROOM_TTL_HOURS": "24",
+        "HOST_GRACE_SECONDS": "180",
+        "ALLOWED_ORIGINS": ""
+      }
+    }
+  }
+}

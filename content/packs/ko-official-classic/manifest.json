@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "packId": "ko-official-classic",
+  "editionId": "codenames-classic-ko",
+  "language": "ko-KR",
+  "title": "한국어 정식판 (자료 미확보)",
+  "kind": "official",
+  "expectedCounts": { "cards": 200, "faces": 400, "keys": 40 },
+  "sourceReferences": [
+    "CGE Codenames 구성 안내: https://www.czechgames.com/games/codenames (단어 카드 200장/400단어, 키 카드 40장)",
+    "한국어 정식판 발행처·판본·인쇄 연도: 미확인 — 실물 카드 확인 필요"
+  ],
+  "validationStatus": "missing",
+  "checksum": null,
+  "notes": "실물 카드 200장의 앞뒤 짝과 키 카드 40장의 배치를 사람이 대조해 입력한 뒤 `npm run content:import` 로 cards.json/keys.json 을 만들고, 대조 기록을 sourceReferences 에 남긴 다음 validationStatus 를 verified 로 바꾼다. 그 전까지 정식 모드는 시작할 수 없다."
+}

@@ -1,0 +1,1602 @@
+[
+  {
+    "id": "koo-001",
+    "faceA": "산타",
+    "faceB": "딸기",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-002",
+    "faceA": "농구",
+    "faceB": "전설",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-003",
+    "faceA": "이끼",
+    "faceB": "풍선",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-004",
+    "faceA": "가방",
+    "faceB": "외계인",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-005",
+    "faceA": "중력",
+    "faceB": "전화",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-006",
+    "faceA": "구름",
+    "faceB": "편지",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-007",
+    "faceA": "정원",
+    "faceB": "태양",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-008",
+    "faceA": "소나무",
+    "faceB": "이집트",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-009",
+    "faceA": "기차",
+    "faceB": "깃발",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-010",
+    "faceA": "지갑",
+    "faceB": "감옥",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-011",
+    "faceA": "조개",
+    "faceB": "강",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-012",
+    "faceA": "숲",
+    "faceB": "다리",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-013",
+    "faceA": "독일",
+    "faceB": "시계",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-014",
+    "faceA": "영국",
+    "faceB": "모래",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-015",
+    "faceA": "이",
+    "faceB": "수영",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-016",
+    "faceA": "동화",
+    "faceB": "떡",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-017",
+    "faceA": "바나나",
+    "faceB": "기타",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-018",
+    "faceA": "여우",
+    "faceB": "게",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-019",
+    "faceA": "거울",
+    "faceB": "궁전",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-020",
+    "faceA": "호수",
+    "faceB": "생일",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-021",
+    "faceA": "상어",
+    "faceB": "피자",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-022",
+    "faceA": "비밀",
+    "faceB": "토끼",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-023",
+    "faceA": "플라스틱",
+    "faceB": "유니콘",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-024",
+    "faceA": "평화",
+    "faceB": "병",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-025",
+    "faceA": "시장",
+    "faceB": "괴물",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-026",
+    "faceA": "모자",
+    "faceB": "돈",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-027",
+    "faceA": "늑대",
+    "faceB": "농장",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-028",
+    "faceA": "런던",
+    "faceB": "눈물",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-029",
+    "faceA": "국수",
+    "faceB": "비행기",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-030",
+    "faceA": "선물",
+    "faceB": "장갑",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-031",
+    "faceA": "줄",
+    "faceB": "우주",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-032",
+    "faceA": "항구",
+    "faceB": "야구",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-033",
+    "faceA": "포도",
+    "faceB": "양",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-034",
+    "faceA": "온도",
+    "faceB": "치즈",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-035",
+    "faceA": "시",
+    "faceB": "요리사",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-036",
+    "faceA": "마법",
+    "faceB": "은",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-037",
+    "faceA": "커피",
+    "faceB": "창문",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-038",
+    "faceA": "새벽",
+    "faceB": "로마",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-039",
+    "faceA": "나무",
+    "faceB": "겨울",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-040",
+    "faceA": "신화",
+    "faceB": "섬",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-041",
+    "faceA": "자",
+    "faceB": "안경",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-042",
+    "faceA": "머리",
+    "faceB": "트로피",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-043",
+    "faceA": "텐트",
+    "faceB": "놀이터",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-044",
+    "faceA": "터널",
+    "faceB": "양말",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-045",
+    "faceA": "라디오",
+    "faceB": "왕",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-046",
+    "faceA": "음악",
+    "faceB": "낙타",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-047",
+    "faceA": "팝콘",
+    "faceB": "주문",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-048",
+    "faceA": "사과",
+    "faceB": "메달",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-049",
+    "faceA": "말",
+    "faceB": "용",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-050",
+    "faceA": "화석",
+    "faceB": "빙하",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-051",
+    "faceA": "판다",
+    "faceB": "남극",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-052",
+    "faceA": "점",
+    "faceB": "제주",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-053",
+    "faceA": "코",
+    "faceB": "소금",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-054",
+    "faceA": "왕자",
+    "faceB": "못",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-055",
+    "faceA": "차",
+    "faceB": "파리",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-056",
+    "faceA": "컴퓨터",
+    "faceB": "설탕",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-057",
+    "faceA": "앵무새",
+    "faceB": "보물",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-058",
+    "faceA": "학교",
+    "faceB": "장미",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-059",
+    "faceA": "진주",
+    "faceB": "감",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-060",
+    "faceA": "등",
+    "faceB": "심장",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-061",
+    "faceA": "동굴",
+    "faceB": "해변",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-062",
+    "faceA": "그물",
+    "faceB": "연",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-063",
+    "faceA": "개구리",
+    "faceB": "춤",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-064",
+    "faceA": "김치",
+    "faceB": "나팔",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-065",
+    "faceA": "사자",
+    "faceB": "코끼리",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-066",
+    "faceA": "우표",
+    "faceB": "무대",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-067",
+    "faceA": "카드",
+    "faceB": "영화",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-068",
+    "faceA": "썰매",
+    "faceB": "방패",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-069",
+    "faceA": "씨앗",
+    "faceB": "초콜릿",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-070",
+    "faceA": "열쇠",
+    "faceB": "기자",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-071",
+    "faceA": "박물관",
+    "faceB": "자동차",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-072",
+    "faceA": "산소",
+    "faceB": "문어",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-073",
+    "faceA": "의자",
+    "faceB": "바위",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-074",
+    "faceA": "장",
+    "faceB": "안개",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-075",
+    "faceA": "신문",
+    "faceB": "탑",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-076",
+    "faceA": "하늘",
+    "faceB": "눈",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-077",
+    "faceA": "마술사",
+    "faceB": "빗",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-078",
+    "faceA": "혀",
+    "faceB": "파도",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-079",
+    "faceA": "주사위",
+    "faceB": "연필",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-080",
+    "faceA": "눈사람",
+    "faceB": "아이스크림",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-081",
+    "faceA": "대나무",
+    "faceB": "역사",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-082",
+    "faceA": "바다",
+    "faceB": "동전",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-083",
+    "faceA": "천둥",
+    "faceB": "튤립",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-084",
+    "faceA": "성",
+    "faceB": "해파리",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-085",
+    "faceA": "우산",
+    "faceB": "로봇",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-086",
+    "faceA": "실",
+    "faceB": "사탕",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-087",
+    "faceA": "대포",
+    "faceB": "시간",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-088",
+    "faceA": "별",
+    "faceB": "퍼즐",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-089",
+    "faceA": "유럽",
+    "faceB": "부엉이",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-090",
+    "faceA": "햄버거",
+    "faceB": "비",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-091",
+    "faceA": "강아지",
+    "faceB": "왕관",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-092",
+    "faceA": "동물원",
+    "faceB": "스파이",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-093",
+    "faceA": "낚시",
+    "faceB": "가위",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-094",
+    "faceA": "오리",
+    "faceB": "레몬",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-095",
+    "faceA": "열매",
+    "faceB": "모닥불",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-096",
+    "faceA": "종이",
+    "faceB": "전구",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-097",
+    "faceA": "선생님",
+    "faceB": "입",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-098",
+    "faceA": "복숭아",
+    "faceB": "북",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-099",
+    "faceA": "분자",
+    "faceB": "손",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-100",
+    "faceA": "날개",
+    "faceB": "학생",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-101",
+    "faceA": "소방관",
+    "faceB": "게임",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-102",
+    "faceA": "사진",
+    "faceB": "일본",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-103",
+    "faceA": "광장",
+    "faceB": "도서관",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-104",
+    "faceA": "오징어",
+    "faceB": "에너지",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-105",
+    "faceA": "아프리카",
+    "faceB": "종",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-106",
+    "faceA": "의사",
+    "faceB": "반지",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-107",
+    "faceA": "절",
+    "faceB": "닌자",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-108",
+    "faceA": "기린",
+    "faceB": "마법사",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-109",
+    "faceA": "나비",
+    "faceB": "해바라기",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-110",
+    "faceA": "불",
+    "faceB": "파티",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-111",
+    "faceA": "바람",
+    "faceB": "케이크",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-112",
+    "faceA": "원자",
+    "faceB": "바이올린",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-113",
+    "faceA": "가수",
+    "faceB": "문",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-114",
+    "faceA": "일기",
+    "faceB": "뿌리",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-115",
+    "faceA": "행성",
+    "faceB": "화가",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-116",
+    "faceA": "가을",
+    "faceB": "한국",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-117",
+    "faceA": "사막",
+    "faceB": "사다리",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-118",
+    "faceA": "거인",
+    "faceB": "백조",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-119",
+    "faceA": "김",
+    "faceB": "수박",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-120",
+    "faceA": "농부",
+    "faceB": "뼈",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-121",
+    "faceA": "금",
+    "faceB": "유리",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-122",
+    "faceA": "인도",
+    "faceB": "경찰",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-123",
+    "faceA": "뉴욕",
+    "faceB": "해적",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-124",
+    "faceA": "공주",
+    "faceB": "로켓",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-125",
+    "faceA": "축구",
+    "faceB": "라면",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-126",
+    "faceA": "빵",
+    "faceB": "공",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-127",
+    "faceA": "책",
+    "faceB": "버섯",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-128",
+    "faceA": "우유",
+    "faceB": "천사",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-129",
+    "faceA": "팔",
+    "faceB": "소",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-130",
+    "faceA": "뉴스",
+    "faceB": "서울",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-131",
+    "faceA": "행운",
+    "faceB": "밤",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-132",
+    "faceA": "가면",
+    "faceB": "도둑",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-133",
+    "faceA": "웃음",
+    "faceB": "칼",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-134",
+    "faceA": "땅콩",
+    "faceB": "기사",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-135",
+    "faceA": "상",
+    "faceB": "카메라",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-136",
+    "faceA": "꽃",
+    "faceB": "친구",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-137",
+    "faceA": "역",
+    "faceB": "뱀",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-138",
+    "faceA": "만화",
+    "faceB": "체스",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-139",
+    "faceA": "병원",
+    "faceB": "계란",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-140",
+    "faceA": "수염",
+    "faceB": "펭귄",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-141",
+    "faceA": "거미",
+    "faceB": "피아노",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-142",
+    "faceA": "목걸이",
+    "faceB": "미국",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-143",
+    "faceA": "촛불",
+    "faceB": "나침반",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-144",
+    "faceA": "빛",
+    "faceB": "금속",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-145",
+    "faceA": "은행",
+    "faceB": "공장",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-146",
+    "faceA": "박쥐",
+    "faceB": "피",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-147",
+    "faceA": "산",
+    "faceB": "지붕",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-148",
+    "faceA": "호랑이",
+    "faceB": "망원경",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-149",
+    "faceA": "잠수함",
+    "faceB": "귀",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-150",
+    "faceA": "노래",
+    "faceB": "그림자",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-151",
+    "faceA": "전기",
+    "faceB": "영웅",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-152",
+    "faceA": "공원",
+    "faceB": "벌",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-153",
+    "faceA": "공항",
+    "faceB": "잎",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-154",
+    "faceA": "기적",
+    "faceB": "어부",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-155",
+    "faceA": "다이아몬드",
+    "faceB": "고래",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-156",
+    "faceA": "활",
+    "faceB": "축제",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-157",
+    "faceA": "낙하산",
+    "faceB": "원숭이",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-158",
+    "faceA": "화산",
+    "faceB": "태권도",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-159",
+    "faceA": "여행",
+    "faceB": "헬리콥터",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-160",
+    "faceA": "팽이",
+    "faceB": "요정",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-161",
+    "faceA": "여름",
+    "faceB": "밧줄",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-162",
+    "faceA": "꼬리",
+    "faceB": "꿀",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-163",
+    "faceA": "하마",
+    "faceB": "공룡",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-164",
+    "faceA": "벽",
+    "faceB": "계곡",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-165",
+    "faceA": "망치",
+    "faceB": "지도",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-166",
+    "faceA": "폭포",
+    "faceB": "곰",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-167",
+    "faceA": "흙",
+    "faceB": "개미",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-168",
+    "faceA": "선인장",
+    "faceB": "목",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-169",
+    "faceA": "미래",
+    "faceB": "해",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-170",
+    "faceA": "무지개",
+    "faceB": "유령",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-171",
+    "faceA": "자석",
+    "faceB": "독수리",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-172",
+    "faceA": "칠판",
+    "faceB": "귤",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-173",
+    "faceA": "여왕",
+    "faceB": "꿈",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-174",
+    "faceA": "도깨비",
+    "faceB": "둥지",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-175",
+    "faceA": "얼음",
+    "faceB": "캥거루",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-176",
+    "faceA": "알",
+    "faceB": "텔레비전",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-177",
+    "faceA": "물",
+    "faceB": "발",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-178",
+    "faceA": "군인",
+    "faceB": "책상",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-179",
+    "faceA": "번개",
+    "faceB": "약속",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-180",
+    "faceA": "유전자",
+    "faceB": "닭",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-181",
+    "faceA": "마이크",
+    "faceB": "탐정",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-182",
+    "faceA": "계단",
+    "faceB": "우물",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-183",
+    "faceA": "돼지",
+    "faceB": "판",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-184",
+    "faceA": "만두",
+    "faceB": "김밥",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-185",
+    "faceA": "버스",
+    "faceB": "세포",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-186",
+    "faceA": "고양이",
+    "faceB": "달",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-187",
+    "faceA": "프랑스",
+    "faceB": "거품",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-188",
+    "faceA": "신발",
+    "faceB": "침대",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-189",
+    "faceA": "할머니",
+    "faceB": "중국",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-190",
+    "faceA": "봄",
+    "faceB": "돌",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-191",
+    "faceA": "배우",
+    "faceB": "화살",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-192",
+    "faceA": "비누",
+    "faceB": "풀",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-193",
+    "faceA": "자전거",
+    "faceB": "혜성",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-194",
+    "faceA": "선장",
+    "faceB": "굴",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-195",
+    "faceA": "인형",
+    "faceB": "과학자",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-196",
+    "faceA": "쥐",
+    "faceB": "배",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-197",
+    "faceA": "뿔",
+    "faceB": "극장",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-198",
+    "faceA": "우주인",
+    "faceB": "북극",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-199",
+    "faceA": "등대",
+    "faceB": "광대",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  },
+  {
+    "id": "koo-200",
+    "faceA": "망토",
+    "faceB": "거북",
+    "locale": "ko-KR",
+    "editionId": "codename-app-ko-original-v1",
+    "sourceReference": "codename-app project original list (2026-09)"
+  }
+]

@@ -1,0 +1,614 @@
+{
+  "version": 1,
+  "theme": "vintage-spy-v1",
+  "note": "파일을 같은 이름으로 교체하면 코드 수정 없이 반영된다. 그림은 장식이며 규칙·카드 수의 근거가 아니다.",
+  "images": {
+    "title-desktop": {
+      "file": "title-desktop.webp",
+      "width": 1672,
+      "height": 941,
+      "aspect": "1672:941",
+      "fallback": "#111827",
+      "usage": "시작 화면 배경 (가로 16:9)"
+    },
+    "title-mobile": {
+      "file": "title-mobile.webp",
+      "width": 941,
+      "height": 1672,
+      "aspect": "941:1672",
+      "fallback": "#111827",
+      "usage": "시작 화면 배경 (세로 9:16)"
+    },
+    "lobby": {
+      "file": "lobby.webp",
+      "width": 1672,
+      "height": 941,
+      "aspect": "1672:941",
+      "fallback": "#111827",
+      "usage": "대기실 배경 (가로)"
+    },
+    "board-desktop": {
+      "file": "board-desktop.webp",
+      "width": 1672,
+      "height": 941,
+      "aspect": "1672:941",
+      "fallback": "#0f172a",
+      "usage": "게임판 배경 (가로)"
+    },
+    "board-mobile": {
+      "file": "board-mobile.webp",
+      "width": 941,
+      "height": 1672,
+      "aspect": "941:1672",
+      "fallback": "#0f172a",
+      "usage": "게임판 배경 (세로)"
+    },
+    "word-card-front": {
+      "file": "word-card-front.webp",
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#F2E5CC",
+      "usage": "공통 단어 카드 바탕 (모든 카드 동일)"
+    },
+    "word-card-back": {
+      "file": "word-card-back.webp",
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#111827",
+      "usage": "공통 카드 뒷면 (셔플 연출)"
+    },
+    "agent-red-01": {
+      "file": "agent-red-01-768.webp",
+      "srcset": [
+        {
+          "file": "agent-red-01-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-red-01-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#B83A42",
+      "usage": "빨강 요원 덮개"
+    },
+    "agent-red-02": {
+      "file": "agent-red-02-768.webp",
+      "srcset": [
+        {
+          "file": "agent-red-02-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-red-02-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#B83A42",
+      "usage": "빨강 요원 덮개"
+    },
+    "agent-red-03": {
+      "file": "agent-red-03-768.webp",
+      "srcset": [
+        {
+          "file": "agent-red-03-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-red-03-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#B83A42",
+      "usage": "빨강 요원 덮개"
+    },
+    "agent-red-04": {
+      "file": "agent-red-04-768.webp",
+      "srcset": [
+        {
+          "file": "agent-red-04-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-red-04-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#B83A42",
+      "usage": "빨강 요원 덮개"
+    },
+    "agent-red-05": {
+      "file": "agent-red-05-768.webp",
+      "srcset": [
+        {
+          "file": "agent-red-05-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-red-05-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#B83A42",
+      "usage": "빨강 요원 덮개"
+    },
+    "agent-red-06": {
+      "file": "agent-red-06-768.webp",
+      "srcset": [
+        {
+          "file": "agent-red-06-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-red-06-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#B83A42",
+      "usage": "빨강 요원 덮개"
+    },
+    "agent-red-07": {
+      "file": "agent-red-07-768.webp",
+      "srcset": [
+        {
+          "file": "agent-red-07-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-red-07-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#B83A42",
+      "usage": "빨강 요원 덮개"
+    },
+    "agent-red-08": {
+      "file": "agent-red-08-768.webp",
+      "srcset": [
+        {
+          "file": "agent-red-08-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-red-08-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#B83A42",
+      "usage": "빨강 요원 덮개"
+    },
+    "agent-blue-01": {
+      "file": "agent-blue-01-768.webp",
+      "srcset": [
+        {
+          "file": "agent-blue-01-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-blue-01-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#3269AA",
+      "usage": "파랑 요원 덮개"
+    },
+    "agent-blue-02": {
+      "file": "agent-blue-02-768.webp",
+      "srcset": [
+        {
+          "file": "agent-blue-02-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-blue-02-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#3269AA",
+      "usage": "파랑 요원 덮개"
+    },
+    "agent-blue-03": {
+      "file": "agent-blue-03-768.webp",
+      "srcset": [
+        {
+          "file": "agent-blue-03-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-blue-03-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#3269AA",
+      "usage": "파랑 요원 덮개"
+    },
+    "agent-blue-04": {
+      "file": "agent-blue-04-768.webp",
+      "srcset": [
+        {
+          "file": "agent-blue-04-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-blue-04-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#3269AA",
+      "usage": "파랑 요원 덮개"
+    },
+    "agent-blue-05": {
+      "file": "agent-blue-05-768.webp",
+      "srcset": [
+        {
+          "file": "agent-blue-05-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-blue-05-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#3269AA",
+      "usage": "파랑 요원 덮개"
+    },
+    "agent-blue-06": {
+      "file": "agent-blue-06-768.webp",
+      "srcset": [
+        {
+          "file": "agent-blue-06-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-blue-06-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#3269AA",
+      "usage": "파랑 요원 덮개"
+    },
+    "agent-blue-07": {
+      "file": "agent-blue-07-768.webp",
+      "srcset": [
+        {
+          "file": "agent-blue-07-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-blue-07-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#3269AA",
+      "usage": "파랑 요원 덮개"
+    },
+    "agent-blue-08": {
+      "file": "agent-blue-08-768.webp",
+      "srcset": [
+        {
+          "file": "agent-blue-08-384.webp",
+          "width": 384
+        },
+        {
+          "file": "agent-blue-08-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#3269AA",
+      "usage": "파랑 요원 덮개"
+    },
+    "double-agent-red": {
+      "file": "double-agent-red-768.webp",
+      "srcset": [
+        {
+          "file": "double-agent-red-384.webp",
+          "width": 384
+        },
+        {
+          "file": "double-agent-red-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#B83A42",
+      "usage": "이중 요원 (빨강 면) — 선공 팀의 아홉 번째 덮개"
+    },
+    "double-agent-blue": {
+      "file": "double-agent-blue-768.webp",
+      "srcset": [
+        {
+          "file": "double-agent-blue-384.webp",
+          "width": 384
+        },
+        {
+          "file": "double-agent-blue-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#3269AA",
+      "usage": "이중 요원 (파랑 면) — 선공 팀의 아홉 번째 덮개"
+    },
+    "bystander-01": {
+      "file": "bystander-01-768.webp",
+      "srcset": [
+        {
+          "file": "bystander-01-384.webp",
+          "width": 384
+        },
+        {
+          "file": "bystander-01-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#D9C7A3",
+      "usage": "시민 덮개"
+    },
+    "bystander-02": {
+      "file": "bystander-02-768.webp",
+      "srcset": [
+        {
+          "file": "bystander-02-384.webp",
+          "width": 384
+        },
+        {
+          "file": "bystander-02-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#D9C7A3",
+      "usage": "시민 덮개"
+    },
+    "bystander-03": {
+      "file": "bystander-03-768.webp",
+      "srcset": [
+        {
+          "file": "bystander-03-384.webp",
+          "width": 384
+        },
+        {
+          "file": "bystander-03-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#D9C7A3",
+      "usage": "시민 덮개"
+    },
+    "bystander-04": {
+      "file": "bystander-04-768.webp",
+      "srcset": [
+        {
+          "file": "bystander-04-384.webp",
+          "width": 384
+        },
+        {
+          "file": "bystander-04-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#D9C7A3",
+      "usage": "시민 덮개"
+    },
+    "bystander-05": {
+      "file": "bystander-05-768.webp",
+      "srcset": [
+        {
+          "file": "bystander-05-384.webp",
+          "width": 384
+        },
+        {
+          "file": "bystander-05-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#D9C7A3",
+      "usage": "시민 덮개"
+    },
+    "bystander-06": {
+      "file": "bystander-06-768.webp",
+      "srcset": [
+        {
+          "file": "bystander-06-384.webp",
+          "width": 384
+        },
+        {
+          "file": "bystander-06-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#D9C7A3",
+      "usage": "시민 덮개"
+    },
+    "bystander-07": {
+      "file": "bystander-07-768.webp",
+      "srcset": [
+        {
+          "file": "bystander-07-384.webp",
+          "width": 384
+        },
+        {
+          "file": "bystander-07-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#D9C7A3",
+      "usage": "시민 덮개"
+    },
+    "assassin": {
+      "file": "assassin-768.webp",
+      "srcset": [
+        {
+          "file": "assassin-384.webp",
+          "width": 384
+        },
+        {
+          "file": "assassin-768.webp",
+          "width": 768
+        }
+      ],
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#1f2937",
+      "usage": "암살자 덮개"
+    },
+    "victory-red": {
+      "file": "victory-red.webp",
+      "width": 1672,
+      "height": 941,
+      "aspect": "1672:941",
+      "fallback": "#3b0d12",
+      "usage": "빨강 팀 승리 배경"
+    },
+    "victory-blue": {
+      "file": "victory-blue.webp",
+      "width": 1672,
+      "height": 941,
+      "aspect": "1672:941",
+      "fallback": "#0d1f3b",
+      "usage": "파랑 팀 승리 배경"
+    },
+    "mission-ended": {
+      "file": "mission-ended.webp",
+      "width": 1672,
+      "height": 941,
+      "aspect": "1672:941",
+      "fallback": "#111111",
+      "usage": "암살자 접촉 종료 배경"
+    },
+    "briefing-guide": {
+      "file": "briefing-guide.webp",
+      "width": 1536,
+      "height": 1024,
+      "aspect": "1536:1024",
+      "fallback": "#111827",
+      "usage": "규칙 도움말 그림"
+    },
+    "reconnecting": {
+      "file": "reconnecting.webp",
+      "width": 1254,
+      "height": 1254,
+      "aspect": "1254:1254",
+      "fallback": "#111827",
+      "usage": "재접속 안내 (투명 배경)"
+    },
+    "app-emblem": {
+      "file": "app-emblem.webp",
+      "width": 1254,
+      "height": 1254,
+      "aspect": "1254:1254",
+      "fallback": "#111827",
+      "usage": "앱 심벌 (투명 배경)"
+    }
+  },
+  "covers": {
+    "red": [
+      "agent-red-01",
+      "agent-red-02",
+      "agent-red-03",
+      "agent-red-04",
+      "agent-red-05",
+      "agent-red-06",
+      "agent-red-07",
+      "agent-red-08"
+    ],
+    "blue": [
+      "agent-blue-01",
+      "agent-blue-02",
+      "agent-blue-03",
+      "agent-blue-04",
+      "agent-blue-05",
+      "agent-blue-06",
+      "agent-blue-07",
+      "agent-blue-08"
+    ],
+    "redDouble": "double-agent-red",
+    "blueDouble": "double-agent-blue",
+    "bystander": [
+      "bystander-01",
+      "bystander-02",
+      "bystander-03",
+      "bystander-04",
+      "bystander-05",
+      "bystander-06",
+      "bystander-07"
+    ],
+    "assassin": "assassin"
+  },
+  "missing": []
+}

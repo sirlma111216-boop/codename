@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "codename/content/manifest.schema.json",
+  "title": "ContentManifest",
+  "type": "object",
+  "required": ["schemaVersion", "packId", "editionId", "language", "title", "kind", "expectedCounts", "sourceReferences", "validationStatus", "checksum"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "packId": { "type": "string", "pattern": "^[a-z0-9-]{3,64}$" },
+    "editionId": { "type": "string", "minLength": 1 },
+    "language": { "type": "string", "minLength": 2 },
+    "title": { "type": "string", "minLength": 1 },
+    "kind": { "enum": ["official", "unofficialOriginal", "custom", "testFixture"] },
+    "expectedCounts": {
+      "type": "object",
+      "required": ["cards", "faces", "keys"],
+      "additionalProperties": false,
+      "properties": {
+        "cards": { "type": "integer", "minimum": 0 },
+        "faces": { "type": "integer", "minimum": 0 },
+        "keys": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "sourceReferences": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "validationStatus": { "enum": ["verified", "unverified", "missing", "unofficial", "testOnly"] },
+    "checksum": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+    "notes": { "type": "string" }
+  }
+}

@@ -1,0 +1,4 @@
+# 로컬 개발용 변수 예시. 복사해서 .dev.vars 로 쓰세요 (.dev.vars 는 커밋하지 않습니다).
+# 공용 입장 암호 (선택). 비워 두거나 지우면 초대 링크만으로 입장합니다.
+# 운영 환경에서는: npx wrangler secret put ENTRY_PASSWORD
+# ENTRY_PASSWORD=모임암호
