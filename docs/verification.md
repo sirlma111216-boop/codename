@@ -28,7 +28,8 @@
 | 클래스 로직 | 단위 `class.test.ts` 25개 · `room-class.test.ts` 11개 (전체 단위 테스트 89개) (정원·권한·신청·승인 경쟁·시작 잠금·반영 기록·수업 종료·60명/15방·projection) | 통과 |
 | 실제 화면 흐름 | 브라우저 `classroom.spec.ts` (교사 1 + 학생 5, 독립 context): 생성·QR·방장 지정·방 생성·신청·승인·입장·준비·시작·교사 공개 관전(정답 없음)·게임 중 공지·지각생 차단·수업 종료 | 통과 (로컬) |
 | 재시작 복원 | 브라우저 `class-restart.spec.ts`: 게임 중 런타임 종료·재시작 → 교사 대시보드·배정·방장·게임·명단 잠금 해제 복원 | 통과 (로컬) |
-| 규모·경쟁·권한 | 봇 시뮬레이션 `tests/load/class-sim.ts` (flow24·race·perm·load60·rooms15) | 결과와 측정값: [class-sim/local.md](class-sim/local.md), [class-sim/production.md](class-sim/production.md) |
+| 규모·경쟁·권한 | 봇 시뮬레이션 `tests/load/class-sim.ts` (flow24·race·perm·load60·rooms15) | 로컬 54/54, **production 54/54** 통과. 측정값: [class-sim/local.md](class-sim/local.md), [class-sim/production.md](class-sim/production.md) |
+| 실제 화면 흐름 (production) | 브라우저 e2e 6개 (`E2E_BASE_URL=… npm run test:e2e`, 학급 흐름 포함, 재시작 테스트 제외) | 통과 |
 
 자세한 대응표: [classroom.md §8](classroom.md#8-검증-addendum-8-대응표).
 

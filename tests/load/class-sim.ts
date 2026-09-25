@@ -248,6 +248,7 @@ async function fillRooms(hosts: Bot[], roomIds: string[], students: Bot[], per: 
       await s.classCmd({ type: 'requestJoin', roomId: roomIds[Math.floor(i / per) % roomIds.length] });
     }),
   );
+  const syncWaits: Promise<unknown>[] = [];
   await Promise.all(
     hosts.map(async (h, i) => {
       const roomId = roomIds[i] as string;
@@ -259,18 +260,24 @@ async function fillRooms(hosts: Bot[], roomIds: string[], students: Bot[], per: 
         const r = (h.classView?.rooms as Json[]).find((x) => x.id === roomId) as Json;
         if (r.seatCount >= r.capacity || !r.requests?.length) break;
         const t0 = Date.now();
-        const a = await h.classCmd({ type: 'approve', roomId, memberId: r.requests[0].memberId, expectedRosterVersion: r.rosterVersion });
-        if (a.ok) metric('approve RTT', Date.now() - t0);
-        else await sleep(100); // 명단이 바뀌었으면 새 화면을 기다렸다 다시
+        const memberId = r.requests[0].memberId as string;
+        const a = await h.classCmd({ type: 'approve', roomId, memberId, expectedRosterVersion: r.rosterVersion });
+        if (a.ok) {
+          metric('approve RTT', Date.now() - t0);
+          // 승인 → 클래스가 방에 명단을 보내고 방이 확인 → 학생 화면에 ‘입장하기’가 뜨기까지
+          const s = students.find((x) => myId(x) === memberId);
+          if (s) syncWaits.push(s.wait(() => s.classView?.you?.assignment?.roomId === roomId && !!s.classView?.you?.assignment?.synced, 30_000).then((ok) => ok && metric('승인→학생 화면 입장하기 가능 (방 반영 확인)', Date.now() - t0)));
+        } else await sleep(100); // 명단이 바뀌었으면 새 화면을 기다렸다 다시
       }
     }),
   );
+  await Promise.all(syncWaits);
 }
 
 async function waitSynced(students: Bot[], label: string) {
   const t0 = Date.now();
   const ok = await Promise.all(students.map((s) => s.wait(() => !!s.classView?.you?.assignment?.synced, 30_000)));
-  metric(`${label}: approve→방 반영 확인까지`, Date.now() - t0);
+  metric(`${label}: 방이 모두 찬 뒤 남은 반영 대기`, Date.now() - t0);
   return ok.every(Boolean);
 }
 
@@ -287,44 +294,47 @@ async function startRoom(host: Bot, members: Bot[], roomId: string): Promise<Jso
   return a;
 }
 
-/** 봇끼리 한 판 진행: 스파이마스터는 힌트, 추측자는 아직 안 덮인 카드 중 하나를 고른다 */
-async function playRoom(bots: Bot[], maxActions: number): Promise<{ finished: boolean; actions: number; errors: string[] }> {
+/**
+ * 봇끼리 한 판 진행. 실제 사람처럼 ‘내 화면이 최신이 된 뒤’ 행동한다:
+ * 방 안에서 가장 최신 revision 을 기준으로 차례를 정하고, 행동할 봇의 화면이 그 revision 에 닿은 뒤에 보낸다.
+ * 서버가 오래된 화면의 명령을 거절한 것(staleRevision)은 설계된 보호이므로 오류와 따로 센다.
+ */
+async function playRoom(bots: Bot[], maxActions: number): Promise<{ finished: boolean; actions: number; errors: string[]; stale: number }> {
   const errors: string[] = [];
+  let stale = 0;
   let actions = 0;
-  let latest = 0;
-  for (let step = 0; step < maxActions; step++) {
-    const g0 = bots[0]!.roomView?.game;
+  const rev = (b: Bot) => (b.roomView?.game?.revision as number | undefined) ?? 0;
+  for (let step = 0; actions < maxActions && step < maxActions * 3; step++) {
+    const freshest = bots.reduce((a, b) => (rev(b) > rev(a) ? b : a));
+    const g0 = freshest.roomView?.game;
     if (!g0) break;
-    latest = Math.max(latest, g0.revision);
-    if (g0.phase === 'finished') return { finished: true, actions, errors };
-    const turn = g0.turnTeam;
-    let actor: Bot | undefined;
-    let cmd: Json;
-    if (g0.phase === 'awaitingClue') {
-      actor = bots.find((b) => b.roomView?.game?.me?.role === 'spymaster' && b.roomView?.game?.me?.team === turn);
-      cmd = { type: 'game', action: { type: 'giveClue', word: `단서${step}`, number: 1 } };
-    } else if (g0.phase === 'guessing') {
-      actor = bots.find((b) => b.roomView?.game?.me?.role === 'operative' && b.roomView?.game?.me?.team === turn);
-      const g = actor?.roomView?.game;
-      if (g && g.guessesMade >= 1 && Math.random() < 0.4) cmd = { type: 'game', action: { type: 'endTurn' } };
-      else {
-        const open = (g?.cards as Json[] | undefined)?.filter((c) => !c.revealed) ?? [];
-        cmd = { type: 'game', action: { type: 'guess', index: open[Math.floor(Math.random() * open.length)]?.index ?? 0 } };
-      }
-    } else {
-      break;
-    }
+    if (g0.phase === 'finished') return { finished: true, actions, errors, stale };
+    const role = g0.phase === 'awaitingClue' ? 'spymaster' : g0.phase === 'guessing' ? 'operative' : null;
+    if (!role) break;
+    const actor = bots.find((b) => b.roomView?.game?.me?.role === role && b.roomView?.game?.me?.team === g0.turnTeam);
     if (!actor) {
       errors.push(`actor not found for ${g0.phase}`);
       break;
     }
-    await actor.wait(() => (actor.roomView?.game?.revision ?? 0) >= latest, 10_000);
+    await actor.wait(() => rev(actor) >= g0.revision, 10_000);
+    const g = actor.roomView?.game;
+    if (!g || g.revision !== g0.revision) continue; // 그 사이 바뀌었으면 다시 본다
+    let cmd: Json;
+    if (g.phase === 'awaitingClue') cmd = { type: 'game', action: { type: 'giveClue', word: `단서${step}`, number: 1 } };
+    else if (g.guessesMade >= 1 && Math.random() < 0.4) cmd = { type: 'game', action: { type: 'endTurn' } };
+    else {
+      const open = (g.cards as Json[]).filter((c) => !c.revealed);
+      cmd = { type: 'game', action: { type: 'guess', index: open[Math.floor(Math.random() * open.length)]?.index ?? 0 } };
+    }
     const a = await actor.roomCmd(cmd);
     actions++;
-    if (!a.ok) errors.push(`${a.code}`);
-    await actor.wait(() => (actor.roomView?.game?.revision ?? 0) > latest || actor.roomView?.game?.phase === 'finished', 10_000);
+    if (!a.ok) {
+      if (a.code === 'staleRevision') stale++;
+      else errors.push(`${a.code}`);
+    }
+    await actor.wait(() => rev(actor) > g.revision || actor.roomView?.game?.phase === 'finished', 10_000);
   }
-  return { finished: bots[0]!.roomView?.game?.phase === 'finished', actions, errors };
+  return { finished: bots.some((b) => b.roomView?.game?.phase === 'finished'), actions, errors, stale };
 }
 
 /** 비밀 노출 검사: 추측자·교사가 받은 모든 프레임 */
@@ -368,7 +378,7 @@ async function flow24() {
   check('4개 방 모두 시작 (정원·준비·역할 충족 후 명단 잠금)', starts.every((a) => a.ok), starts.map((a) => a.code ?? 'ok').join(','));
   check('교사 화면: 4방 모두 게임 중', await teacher.wait(() => (teacher.classView?.rooms as Json[]).every((r) => r.status === 'playing'), 10_000));
   const plays = await Promise.all(groups.map((g) => playRoom(g.members, 120)));
-  check('4방 동시 진행 → 모두 종료', plays.every((p) => p.finished), plays.map((p) => `${p.actions}수${p.errors.length ? `(${p.errors.join('/')})` : ''}`).join(' · '));
+  check('4방 동시 진행 → 모두 종료, 예상 밖 거절 없음', plays.every((p) => p.finished && p.errors.length === 0), plays.map((p) => `${p.actions}수${p.errors.length ? `(${p.errors.join('/')})` : ''}${p.stale ? ` stale ${p.stale}` : ''}`).join(' · '));
   check('교사 화면: 끝난 방 표시', await teacher.wait(() => (teacher.classView?.rooms as Json[]).every((r) => r.status === 'finished'), 10_000));
 
   // 비밀 노출: 추측자 방 프레임, 모든 학생 클래스 프레임, 교사 프레임
@@ -595,7 +605,7 @@ async function load60() {
   const st = await makeBots(60);
   const t0 = Date.now();
   const joined = await joinAll(st, classId, token, 5000);
-  metric('60명 입장 전체 소요', Date.now() - t0);
+  metric('60명 입장 전체 소요 (도착을 5초에 걸쳐 흩음)', Date.now() - t0);
   check('학생 60명 입장·클래스 연결', joined === 60, `${joined}/60`);
   const hosts = st.slice(0, 10);
   const others = st.slice(10);
@@ -615,10 +625,20 @@ async function load60() {
   metric('10방 × 10수 동시 진행', Date.now() - tPlay);
   const totalActions = plays.reduce((n, p) => n + p.actions, 0);
   const errs = plays.flatMap((p) => p.errors);
+  const staleCount = plays.reduce((n, p) => n + p.stale, 0);
+  notes.push(`load60: 오래된 화면으로 보낸 명령을 서버가 거절한 횟수(staleRevision) ${staleCount}`);
   check('10방 동시 힌트 제출·카드 공개', totalActions >= 60 && errs.length === 0, `${totalActions}수, 오류 ${errs.length}${errs.length ? ` (${[...new Set(errs)].join('/')})` : ''}`);
 
   // 재접속: 60명 방·클래스 소켓을 모두 끊었다 다시 붙인다
-  const revs = groups.map((g) => g.host.roomView?.game?.revision);
+  // 끊기 전 기준: 방 안 모두의 화면이 같은 revision 에 모인 뒤의 값
+  const revOf = (b: Bot) => (b.roomView?.game?.revision as number | undefined) ?? 0;
+  const revs = await Promise.all(
+    groups.map(async (g) => {
+      const top = Math.max(...g.members.map(revOf));
+      await g.host.wait(() => g.members.every((m) => revOf(m) === top), 10_000);
+      return top;
+    }),
+  );
   for (const b of st) b.closeAll();
   await sleep(1000);
   const tr = Date.now();
