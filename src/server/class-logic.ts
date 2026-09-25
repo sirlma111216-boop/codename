@@ -5,7 +5,8 @@
 import { ANNOUNCE_MAX, CLASS_NAME_MAX, ROOM_CAP_LIMIT_MAX, ROOM_CAP_LIMIT_MIN, ROOM_NAME_MAX } from '../shared/constants.ts';
 import type { ClassCommand } from '../shared/class-protocol.ts';
 import type { ClassMemberView, ClassNoticeKind, ClassRoomStatus, ClassRoomSync, ClassRoomView, ClassView, RoomSummary } from '../shared/classroom.ts';
-import { cleanNickname, cleanText } from './room-logic.ts';
+import { botNickname, cleanNickname, cleanText } from './room-logic.ts';
+import type { BotLevel } from '../shared/bots.ts';
 
 export const CLASS_SCHEMA_VERSION = 1;
 const OPS_KEEP = 400;
@@ -23,6 +24,15 @@ export interface ClassMember {
   assignment: string | null;
   request: { roomId: string; at: number } | null;
   notice: { kind: ClassNoticeKind; roomName: string; at: number } | null;
+}
+
+/** 시뮬레이션용 봇 좌석. 학생이 아니므로 클래스 정원·미배정 수에 들어가지 않는다. */
+export interface ClassBot {
+  id: string;
+  nickname: string;
+  level: BotLevel;
+  roomId: string;
+  createdAt: number;
 }
 
 export interface ClassRoom {
@@ -65,6 +75,7 @@ export interface ClassState {
   ops: { id: string; actor: string; ok: boolean; code?: string; message?: string; roomId?: string }[];
   /** 수업 종료·만료 뒤 지워야 할 게임방 (재시도 목록) */
   cleanup: string[];
+  bots: Record<string, ClassBot>;
 }
 
 export interface ClassEnv {
@@ -102,6 +113,7 @@ export function createClass(classId: string, teacherHash: string, recoveryKeyHas
     helpRequests: [],
     ops: [],
     cleanup: [],
+    bots: {},
   };
 }
 
@@ -135,6 +147,7 @@ export function migrateClass(raw: unknown): ClassState | null {
     helpRequests: c.helpRequests ?? [],
     ops: c.ops ?? [],
     cleanup: c.cleanup ?? [],
+    bots: c.bots ?? {},
   };
 }
 
@@ -214,6 +227,7 @@ function notify(m: ClassMember | undefined, kind: ClassNoticeKind, roomName: str
 
 function releaseSeat(c: ClassState, r: ClassRoom, memberId: string) {
   r.seats = r.seats.filter((s) => s !== memberId);
+  if (c.bots[memberId]) delete c.bots[memberId];
   const m = c.members[memberId];
   if (m && m.assignment === r.id) m.assignment = null;
   if (r.hostMemberId === memberId) r.hostMemberId = null;
@@ -258,6 +272,7 @@ function closeRoomInState(c: ClassState, r: ClassRoom, reason: 'teacher' | 'host
     }
   }
   clearRequestsForRoom(c, r, 'roomClosed', now);
+  for (const b of Object.values(c.bots)) if (b.roomId === r.id) delete c.bots[b.id];
   r.seats = [];
   r.hostMemberId = null;
   r.status = 'closed';
@@ -333,20 +348,24 @@ export function applyClassCommand(c: ClassState, actor: Actor, cmd: ClassCommand
 
     // ---------------------------------------------------------------- 방장
     case 'createRoom': {
-      if (!me) return no('forbidden', '선생님이 방장으로 지정한 학생만 방을 만들 수 있습니다.');
-      if (!me.designated) return no('notDesignated', '선생님이 방장으로 지정한 학생만 방을 만들 수 있습니다.');
-      if (activeRooms(c).some((r) => r.hostMemberId === me.id)) return no('alreadyOwns', '이미 관리 중인 방이 있습니다. 한 번에 한 방만 만들 수 있습니다.');
-      if (me.assignment) return no('alreadyAssigned', '다른 방에 배정되어 있습니다. 방에서 나온 뒤 만드세요.');
+      if (!teacher) {
+        if (!me) return no('forbidden', '선생님이 방장으로 지정한 학생만 방을 만들 수 있습니다.');
+        if (!me.designated) return no('notDesignated', '선생님이 방장으로 지정한 학생만 방을 만들 수 있습니다.');
+        if (activeRooms(c).some((r) => r.hostMemberId === me.id)) return no('alreadyOwns', '이미 관리 중인 방이 있습니다. 한 번에 한 방만 만들 수 있습니다.');
+        if (me.assignment) return no('alreadyAssigned', '다른 방에 배정되어 있습니다. 방에서 나온 뒤 만드세요.');
+      }
       if (activeRooms(c).length >= env.maxRooms) return no('tooManyRooms', `이 클래스의 게임방은 최대 ${env.maxRooms}개입니다.`);
       if (cmd.capacity < c.settings.roomCapMin || cmd.capacity > c.settings.roomCapMax) return no('badCapacity', `정원은 ${c.settings.roomCapMin}~${c.settings.roomCapMax}명 사이에서 고르세요.`);
-      const name = cleanText(cmd.name, ROOM_NAME_MAX) || `${me.nickname}의 방`;
+      const seatsTaken = me ? 1 : 0;
+      if (cmd.bots && cmd.bots.count > cmd.capacity - seatsTaken) return no('roomFull', `빈자리는 ${cmd.capacity - seatsTaken}개입니다.`);
+      const name = cleanText(cmd.name, ROOM_NAME_MAX) || (me ? `${me.nickname}의 방` : '시뮬레이션 방');
       const id = env.newId(16);
       c.rooms[id] = {
         id,
         name,
         capacity: cmd.capacity,
-        hostMemberId: me.id,
-        seats: [me.id], // 방장도 좌석 하나를 쓴다
+        hostMemberId: me ? me.id : null, // 선생님이 만든 방: 학생 방장 없이 선생님이 관리한다
+        seats: me ? [me.id] : [], // 학생 방장도 좌석 하나를 쓴다. 선생님은 좌석을 쓰지 않는다
         status: 'waiting',
         syncVersion: 1,
         syncedVersion: 0,
@@ -357,10 +376,37 @@ export function applyClassCommand(c: ClassState, actor: Actor, cmd: ClassCommand
         report: null,
         closeReason: null,
       };
-      me.assignment = id;
-      me.request = null;
+      if (me) {
+        me.assignment = id;
+        me.request = null;
+      }
+      const created = c.rooms[id] as ClassRoom;
+      if (cmd.bots) seatBots(c, created, cmd.bots.count, cmd.bots.level, env);
+      clearRequestsIfFull(c, created, env.now);
       effects.syncRooms.push(id);
       effects.roomId = id;
+      return done();
+    }
+    case 'addBots': {
+      const r = room(cmd.roomId);
+      if (!r) return no('noRoom', '이 클래스에 그런 방이 없습니다.');
+      if (!canManage(r)) return no('forbidden', '그 방의 방장이나 선생님만 봇을 넣을 수 있습니다.');
+      if (r.status !== 'waiting') return no('roomLocked', '대기 중인 방에만 봇을 넣을 수 있습니다.');
+      const free = r.capacity - r.seats.length;
+      if (cmd.count > free) return no('roomFull', free > 0 ? `빈자리는 ${free}개입니다.` : '정원이 찼습니다.');
+      seatBots(c, r, cmd.count, cmd.level, env);
+      clearRequestsIfFull(c, r, env.now);
+      effects.syncRooms.push(bump(r));
+      return done();
+    }
+    case 'removeBot': {
+      const r = room(cmd.roomId);
+      if (!r) return no('noRoom', '이 클래스에 그런 방이 없습니다.');
+      if (!canManage(r)) return no('forbidden', '그 방의 방장이나 선생님만 봇을 뺄 수 있습니다.');
+      if (r.status !== 'waiting') return no('roomLocked', '대기 중인 방에서만 봇을 뺄 수 있습니다.');
+      if (!c.bots[cmd.botId] || !r.seats.includes(cmd.botId)) return no('notSeated', '이 방의 봇이 아닙니다.');
+      releaseSeat(c, r, cmd.botId);
+      effects.syncRooms.push(bump(r));
       return done();
     }
     case 'approve': {
@@ -582,6 +628,18 @@ export function applyClassCommand(c: ClassState, actor: Actor, cmd: ClassCommand
   }
 }
 
+/** 봇을 방 좌석에 앉힌다 (정원 확인은 호출자가 한다) */
+function seatBots(c: ClassState, r: ClassRoom, count: number, level: BotLevel, env: ClassEnv) {
+  const taken = new Set(r.seats.map((id) => c.bots[id]?.nickname ?? c.members[id]?.nickname ?? ''));
+  for (let i = 0; i < count; i++) {
+    const nickname = botNickname(taken);
+    taken.add(nickname);
+    const id = env.newId(9);
+    c.bots[id] = { id, nickname, level, roomId: r.id, createdAt: env.now };
+    r.seats.push(id);
+  }
+}
+
 function activeRoomsIncludingClosing(c: ClassState): string[] {
   return Object.values(c.rooms)
     .filter((r) => r.syncedVersion < r.syncVersion)
@@ -618,6 +676,8 @@ export function buildSync(c: ClassState, roomId: string): ClassRoomSync | null {
     capacity: r.capacity,
     hostMemberId: r.hostMemberId,
     members: r.seats.map((id) => {
+      const b = c.bots[id];
+      if (b) return { memberId: id, nickname: b.nickname, sessionHash: null, bot: { level: b.level } };
       const m = c.members[id];
       return { memberId: id, nickname: m?.nickname ?? '떠난 학생', sessionHash: m?.sessionHash ?? null };
     }),
@@ -782,7 +842,7 @@ export function projectClass(c: ClassState, viewer: Actor, online: Set<string>, 
   const isT = viewer.kind === 'teacher';
   const me = viewer.kind === 'student' ? c.members[viewer.memberId] : undefined;
   const members = Object.values(c.members);
-  const nick = (id: string | null) => (id ? (c.members[id]?.nickname ?? null) : null);
+  const nick = (id: string | null) => (id ? (c.members[id]?.nickname ?? c.bots[id]?.nickname ?? null) : null);
   const ownsRoom = me ? activeRooms(c).find((r) => r.hostMemberId === me.id) : undefined;
 
   // 수업이 끝났으면 교사에게는 닫힌 방도 기록으로 보여 준다
@@ -798,11 +858,12 @@ export function projectClass(c: ClassState, viewer: Actor, online: Set<string>, 
         hostMemberId: r.hostMemberId,
         hostNickname: nick(r.hostMemberId),
         status: r.status,
+        botCount: r.seats.filter((id) => !!c.bots[id]).length,
       };
       // 교사, 그리고 그 방의 방장·참가자만 자세한 명단을 본다. 다른 방의 단어판·정답·힌트·채팅은 여기에 없다.
       const involved = isT || (!!me && (r.seats.includes(me.id) || r.hostMemberId === me.id));
       if (!involved) return base;
-      base.seats = r.seats.map((id) => ({ memberId: id, nickname: nick(id) ?? '떠난 학생', online: online.has(id) }));
+      base.seats = r.seats.map((id) => (c.bots[id] ? { memberId: id, nickname: c.bots[id].nickname, online: true, bot: true } : { memberId: id, nickname: nick(id) ?? '떠난 학생', online: online.has(id) }));
       if (isT || r.hostMemberId === me?.id) {
         base.requests = members
           .filter((m) => m.request?.roomId === r.id)

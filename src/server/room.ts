@@ -5,13 +5,15 @@
 
 import { DurableObject } from 'cloudflare:workers';
 import type { ClassRoomSync } from '../shared/classroom.ts';
-import { CLOSE, MAX_MESSAGE_BYTES, clientMessageSchema, type ClientMessage, type ServerMessage } from '../shared/protocol.ts';
+import { CLOSE, MAX_MESSAGE_BYTES, clientMessageSchema, type ClientMessage, type Command, type ServerMessage } from '../shared/protocol.ts';
+import type { SoloConfig } from '../shared/bots.ts';
 import { PROTOCOL_VERSION } from '../shared/view.ts';
 import {
   applyClassSync,
   applyCommand,
   classStartProblems,
   createRoom,
+  createSoloRoom,
   isSpymasterViewer,
   isTeacherSession,
   joinRoom,
@@ -22,9 +24,11 @@ import {
   recordDedup,
   roomSummary,
   TEACHER_ID,
+  type Member,
   type RoomEnv,
   type RoomState,
 } from './room-logic.ts';
+import { botDelayMs, decideBotCommand, fallbackBotCommand, markBotFailed, nextBotTask, recordBotDecision, type BotTask } from './bots/room-bots.ts';
 import { randomToken, safeEqual } from './security.ts';
 import type { Env } from './env.ts';
 
@@ -42,6 +46,15 @@ const CLASS_ROOM_CHECK_MS = 6 * 3600_000;
 const TOMBSTONE_TTL_MS = 3 * 24 * 3600_000;
 
 export type RoomStatus = 'member' | 'notMember' | 'gone' | 'banned';
+
+/** 학생 방장이 없는 학급 방에서 선생님이 방장으로 쓸 수 있는 명령 */
+function teacherHostAllowed(cmd: Command): boolean {
+  if (cmd.type === 'game') return cmd.action.type === 'abort' || cmd.action.type === 'replaceSpymaster';
+  return ['startGame', 'autoBalance', 'backToLobby', 'setSettings', 'setBotSeat', 'setWatchKey'].includes(cmd.type);
+}
+
+/** 관전하는 선생님을 명령 적용용으로 나타낸 값 (방 참가자 목록에는 없다) */
+const teacherActor = (sessionHash: string): Member => ({ id: TEACHER_ID, nickname: '선생님', sessionHash, joinedAt: 0, team: null, role: 'spectator' });
 
 export class GameRoomDurableObject extends DurableObject<Env> {
   /** undefined = 아직 안 읽음, null = 방 없음 */
@@ -74,8 +87,25 @@ export class GameRoomDurableObject extends DurableObject<Env> {
     return this.room;
   }
 
+  /** 사람(참가자 또는 관전 교사)이 한 명이라도 연결되어 있는가. 아무도 없으면 봇은 쉰다. */
+  private hasHumans(room: RoomState): boolean {
+    return this.sockets().some((s) => this.validSocket(room, s.att));
+  }
+
+  /** 봇이 할 일을 예약한다. 같은 상황이면 기존 예약을 그대로 둔다. */
+  private planBots(next: RoomState) {
+    const task = this.hasHumans(next) ? nextBotTask(next) : null;
+    if (!task) {
+      next.botTimer = null;
+      return;
+    }
+    if (next.botTimer?.key === task.key) return;
+    next.botTimer = { key: task.key, memberId: task.memberId, kind: task.kind, at: Date.now() + botDelayMs(next, task) };
+  }
+
   /** 저장이 끝난 뒤에만 메모리 상태를 바꾼다. 실패하면 예외가 올라가고 전송하지 않는다. */
   private async persist(next: RoomState): Promise<void> {
+    this.planBots(next);
     await this.ctx.storage.put(STORAGE_KEY, next);
     this.room = next;
     const env = this.roomEnv();
@@ -88,7 +118,12 @@ export class GameRoomDurableObject extends DurableObject<Env> {
       at = next.lastActivity + env.ttlHours * 3600_000;
       if (next.hostOfflineSince !== null) at = Math.min(at, next.hostOfflineSince + env.hostGraceSeconds * 1000 + 1000);
     }
-    await this.ctx.storage.setAlarm(Math.max(at, Date.now() + 1000));
+    let floor = Date.now() + 1000;
+    if (next.botTimer && next.botTimer.at < at) {
+      at = next.botTimer.at;
+      floor = Date.now() + 150;
+    }
+    await this.ctx.storage.setAlarm(Math.max(at, floor));
   }
 
   private classStub(classId: string) {
@@ -177,6 +212,19 @@ export class GameRoomDurableObject extends DurableObject<Env> {
     const room = createRoom(input.roomId, input.sessionHash, input.nickname, this.roomEnv());
     await this.persist(room);
     return { ok: true, inviteToken: room.inviteToken };
+  }
+
+  /** 혼자 하기: 나 + 봇으로 방을 만들고 바로 게임을 시작한다. 봇은 내가 접속하면 움직이기 시작한다. */
+  async createSolo(input: { roomId: string; sessionHash: string; nickname: string; config: SoloConfig }): Promise<{ ok: true } | { ok: false; code: string; message: string }> {
+    const existing = await this.load();
+    if (existing || (await this.ctx.storage.get(TOMBSTONE_KEY))) return { ok: false, code: 'exists', message: '이미 있는 방입니다.' };
+    const env = this.roomEnv();
+    const room = createSoloRoom(input.roomId, input.sessionHash, input.nickname, input.config, env);
+    const host = room.members[room.hostId] as Member;
+    const res = applyCommand(room, host, { t: 'cmd', commandId: `solo-${randomToken(9)}`, cmd: { type: 'startGame' } }, env, new Set([host.id]));
+    if (!res.ok) return { ok: false, code: res.code, message: res.message };
+    await this.persist(room);
+    return { ok: true };
   }
 
   async join(input: { sessionHash: string; inviteToken: string; nickname: string }): Promise<{ ok: true } | { ok: false; code: string }> {
@@ -331,12 +379,14 @@ export class GameRoomDurableObject extends DurableObject<Env> {
       return;
     }
 
-    if (att.memberId === TEACHER_ID) {
+    const asTeacher = att.memberId === TEACHER_ID;
+    if (asTeacher && !(room.classLink && room.hostId === TEACHER_ID && teacherHostAllowed(msg.cmd))) {
       // 교사의 관전은 공개 정보만 본다. 게임 행동·채팅은 보낼 수 없다.
+      // 학생 방장이 없는 방(선생님이 만든 방 등)에서만 시작·중단 같은 방장 일을 대신한다.
       this.send(ws, { t: 'ack', commandId: msg.commandId, ok: false, code: 'forbidden', message: '관전 중인 선생님은 게임 행동을 할 수 없습니다.' });
       return;
     }
-    const me = room.members[att.memberId];
+    const me = asTeacher ? teacherActor(att.sessionHash) : room.members[att.memberId];
     if (!me) return;
 
     // ---- 명령: 멱등 처리 → 적용 → 저장 → 응답 → 전송
@@ -361,7 +411,7 @@ export class GameRoomDurableObject extends DurableObject<Env> {
 
     const env = this.roomEnv();
     const next = structuredClone(room);
-    const meNext = next.members[me.id];
+    const meNext = asTeacher ? teacherActor(att.sessionHash) : next.members[me.id];
     if (!meNext) return;
     const res = applyCommand(next, meNext, msg, env, this.online());
     if (!res.ok) {
@@ -421,7 +471,7 @@ export class GameRoomDurableObject extends DurableObject<Env> {
     await this.ctx.blockConcurrencyWhile(async () => {
       const room = await this.load();
       const link = room?.classLink;
-      const me = room?.members[memberId];
+      const me = memberId === TEACHER_ID ? teacherActor('') : room?.members[memberId];
       const fail = (code: string, message: string) => this.send(ws, { t: 'ack', commandId: msg.commandId, ok: false, code, message });
       if (!room || !link || !me) return fail('gone', '방이 없습니다.');
       if (room.hostId !== me.id) return fail('forbidden', '방장만 시작할 수 있습니다.');
@@ -439,7 +489,7 @@ export class GameRoomDurableObject extends DurableObject<Env> {
 
       const env = this.roomEnv();
       const next = structuredClone(room);
-      const meNext = next.members[me.id] as NonNullable<typeof me>;
+      const meNext = memberId === TEACHER_ID ? me : (next.members[me.id] as NonNullable<typeof me>);
       const res = applyCommand(next, meNext, msg, env, this.online(), { classStartApproved: true });
       if (!res.ok || !next.game || !next.classLink) {
         await this.classStub(link.classId).cancelStart({ roomId: room.roomId, opId: msg.commandId }).catch(() => {});
@@ -545,6 +595,10 @@ export class GameRoomDurableObject extends DurableObject<Env> {
       await this.ctx.storage.deleteAll();
       return;
     }
+    if (room.botTimer && Date.now() >= room.botTimer.at - 30) {
+      await this.runBotStep(room);
+      return; // 저장하면서 다음 alarm(다음 봇 차례·정리 확인)을 다시 예약했다
+    }
     const env = this.roomEnv();
 
     if (room.classLink) {
@@ -582,6 +636,66 @@ export class GameRoomDurableObject extends DurableObject<Env> {
     } else {
       await this.persist(next); // 다음 알람 예약
     }
+  }
+
+  // ------------------------------------------------------------------ 봇
+
+  private applyBot(room: RoomState, task: BotTask, cmd: Command) {
+    const bot = room.members[task.memberId] as Member;
+    const msg: Extract<ClientMessage, { t: 'cmd' }> = {
+      t: 'cmd',
+      commandId: `bot-${randomToken(9)}`,
+      gameId: room.game?.gameId ?? null,
+      expectedRevision: room.game?.revision ?? 0,
+      cmd,
+    };
+    return applyCommand(room, bot, msg, this.roomEnv(), this.online());
+  }
+
+  /**
+   * 예약된 봇 차례 하나를 실행한다. 봇의 명령도 사람과 같은 applyCommand 를 거친다
+   * (차례·역할·revision·게임 규칙 검사). 거절되면 안전한 대안을 쓰고, 그래도 안 되면 그 일을 건너뛴다.
+   */
+  private async runBotStep(room: RoomState) {
+    const base = structuredClone(room);
+    const timer = base.botTimer;
+    base.botTimer = null;
+    const task = this.hasHumans(base) ? nextBotTask(base) : null;
+    if (!task || !timer || task.key !== timer.key) {
+      await this.persist(base); // 상황이 바뀌었으면 다시 예약
+      this.broadcast(base);
+      return;
+    }
+    let final: RoomState | null = null;
+    let scope: 'all' | 'spymasters' = 'all';
+    const decision = decideBotCommand(base, task);
+    if (decision) {
+      const trial = structuredClone(base);
+      const clueIdBefore = trial.game?.nextClueId ?? null;
+      const res = this.applyBot(trial, task, decision.cmd);
+      if (res.ok) {
+        recordBotDecision(trial, decision, task.kind === 'clue' ? clueIdBefore : null);
+        final = trial;
+        scope = res.scope;
+      } else {
+        console.error('bot command rejected', task.kind, res.code);
+      }
+    }
+    if (!final) {
+      const fb = fallbackBotCommand(base, task);
+      const trial = structuredClone(base);
+      const res = fb ? this.applyBot(trial, task, fb) : null;
+      if (res?.ok) {
+        final = trial;
+        scope = res.scope;
+      } else {
+        markBotFailed(base, task.key);
+        final = base;
+      }
+    }
+    await this.persist(final);
+    this.broadcast(final, scope);
+    if (final.classLink) this.reportToClass(final);
   }
 
   /** 독립 방을 없앤다: 소켓 종료 + 저장 데이터·초대 정보 삭제 */

@@ -44,7 +44,8 @@
     "ALLOWED_ORIGINS": "",
     "CLASS_MAX_STUDENTS": "60",
     "CLASS_MAX_ROOMS": "15",
-    "ALLOW_STANDALONE_ROOMS": "true"
+    "ALLOW_STANDALONE_ROOMS": "true",
+    "ALLOW_SOLO": "true"
   },
 
   "env": {
@@ -63,7 +64,8 @@
         "ALLOWED_ORIGINS": "",
         "CLASS_MAX_STUDENTS": "60",
         "CLASS_MAX_ROOMS": "15",
-        "ALLOW_STANDALONE_ROOMS": "true"
+        "ALLOW_STANDALONE_ROOMS": "true",
+        "ALLOW_SOLO": "true"
       }
     }
   }

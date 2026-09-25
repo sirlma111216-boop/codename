@@ -555,6 +555,9 @@ a {
 .chat-panel {
   grid-column: span 5;
 }
+.bot-panel {
+  grid-column: span 5;
+}
 .invite-input {
   font-family: ui-monospace, Consolas, monospace;
   font-size: 0.85rem;
@@ -1352,6 +1355,7 @@ details summary {
   .settings-panel,
   .ready-panel,
   .host-panel,
+  .bot-panel,
   .chat-panel {
     grid-column: span 12;
   }
@@ -1775,4 +1779,153 @@ details summary {
 .chat-form .btn {
   flex: none;
   white-space: nowrap;
+}
+
+/* ------------------------------------------------------------ 봇 · 혼자서 플레이 */
+.home-solo {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 10px 0 4px;
+}
+.btn-solo {
+  border-color: var(--brass-2);
+  background: rgba(184, 155, 98, 0.16);
+}
+.solo-form {
+  display: grid;
+  gap: 12px;
+}
+.solo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  align-items: start;
+}
+.seg {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.seg legend {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+  padding: 0;
+}
+.seg-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.seg-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.seg-item input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.seg-item:focus-within {
+  outline: 3px solid var(--brass-2);
+  outline-offset: 1px;
+}
+.seg-on {
+  border-color: var(--brass-2);
+  background: rgba(184, 155, 98, 0.18);
+  color: var(--brass-2);
+  font-weight: 600;
+}
+.solo-summary {
+  border-top: 1px solid var(--panel-border);
+  padding-top: 8px;
+}
+.solo-side {
+  margin: 4px 0;
+}
+.solo-side-red strong {
+  color: var(--red-2);
+}
+.solo-side-blue strong {
+  color: var(--blue-2);
+}
+.level-hints {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.badge-bot {
+  color: var(--parchment);
+  background: rgba(111, 159, 224, 0.18);
+  border-color: rgba(111, 159, 224, 0.5);
+}
+.bot-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  display: grid;
+  gap: 6px;
+}
+.bot-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.bot-controls {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.bot-controls select,
+.bot-adder select {
+  background: rgba(11, 18, 32, 0.8);
+  color: var(--text);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 3px 6px;
+}
+.bot-activity {
+  color: var(--blue-2);
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+.bot-intent {
+  color: var(--blue-2);
+  font-size: 0.85rem;
+}
+.watch-tools {
+  border-top: 1px dashed var(--panel-border);
+  padding-top: 6px;
+}
+.sim-room {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px dashed var(--panel-border);
+  border-radius: 8px;
+}
+.sim-room summary {
+  cursor: pointer;
+  color: var(--brass-2);
+}
+.bot-adder {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .solo-grid {
+    grid-template-columns: 1fr;
+  }
 }

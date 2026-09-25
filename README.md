@@ -6,6 +6,7 @@
 - 모든 판정(정답·추측 수·턴·승패)은 서버가 합니다. 추측자·관전자·방장에게는 미공개 정체가 **전송되지 않습니다**.
 - 규칙 프로필: 표준 대전(4인+), 소인원 협력(가상 상대, 룰북 p.8), 3인 공용 추측자(룰북 p.8)
 - **학급 모드:** 교사가 클래스를 만들고(초대 링크·QR), 지정한 학생 방장이 게임방을 만들고, 학생은 참가 신청 → 방장 승인으로 들어간다. 여러 방이 동시에 독립 진행되고, 교사는 대시보드에서 현황·공개 관전·공지·수업 종료를 한다. 자세한 설명: [docs/classroom.md](docs/classroom.md)
+- **봇:** 처음 화면의 **🤖 혼자서 플레이**로 인원·난이도·봇 속도를 골라 나 + 봇으로 바로 한 판(추측자·스파이마스터·관전만). 독립 방의 방장은 모자란 자리를 봇으로 채울 수 있고, 학급에서는 선생님이 봇으로 채운 **시뮬레이션 방**을 만들거나 방장·선생님이 빈자리를 봇으로 채운다. 봇도 사람과 같은 규칙 검사를 거치고, 봇 추측자는 정답을 보지 못한다. 자세한 설명: [docs/bots.md](docs/bots.md)
 - 구조: `브라우저 ↔ Cloudflare Worker(API·WebSocket) ↔ 게임방마다 GameRoomDurableObject 하나 (+ 학급 모드는 클래스마다 ClassroomDurableObject 하나)`. 별도 DB 서비스 없이 방·클래스 상태를 Cloudflare Durable Object 내장 저장소(SQLite)에 보관합니다.
 
 > **콘텐츠 현황:** 엔진·통신 구현은 끝났지만 **한국어 정식판 400단어와 원본 키 카드 40장은 확보·검증되지 않았습니다.** 정식 모드는 잠겨 있고, 지금은 이 프로젝트가 만든 비공식 단어 팩(무작위 9/8/7/1 배치)이나 방장이 직접 입력한 단어로 플레이합니다. 자세한 내용: [docs/content-status.md](docs/content-status.md)
@@ -19,6 +20,7 @@
 | [docs/content-verify-report.md](docs/content-verify-report.md) | `npm run content:verify -- --write` 결과 |
 | [docs/verification.md](docs/verification.md) | 검증 보고서 (실행한 것 / 실행하지 않은 것) |
 | [docs/classroom.md](docs/classroom.md) | 학급 모드: 흐름, 권한, 클래스↔방 배정 일관성, 수명·정리, 검증 대응표 |
+| [docs/bots.md](docs/bots.md) | 봇: 혼자서 플레이·학급 시뮬레이션, 봇이 지키는 약속, 연상 사전, 난이도, 측정값, 한계 |
 | [docs/class-sim/](docs/class-sim/) | 학급 모드 봇 시뮬레이션 결과 (로컬·production 측정값) |
 | [public/assets/manifest.json](public/assets/manifest.json) | 그림 파일·대체색·비율·쓰임 |
 
@@ -106,6 +108,8 @@ staging 은 `npx wrangler secret put ENTRY_PASSWORD --env staging`. 로컬은 `.
 |---|---|
 | 학급 모드 인원 | 클래스 정원 기본 40명(교사 제외), 상한 `CLASS_MAX_STUDENTS`(기본 60), 클래스당 게임방 `CLASS_MAX_ROOMS`(기본 15), 방 정원 4~8명(기본 6). 모두 운영 설정이며 원작 인원 규정이 아닙니다. 60명은 봇 시뮬레이션으로 측정한 범위입니다([docs/classroom.md](docs/classroom.md)) |
 | 학급 전용 배포 | `ALLOW_STANDALONE_ROOMS` 를 `"false"` 로 두면 독립 게임방 만들기를 막고 학급 모드만 씁니다 |
+| 혼자서 플레이 끄기 | `ALLOW_SOLO` 를 `"false"` 로 두면 처음 화면의 혼자서 플레이(봇과 한 판)를 막습니다. 학급·독립 방의 봇 넣기는 그대로입니다 |
+| 봇 | 한 방에 최대 8명(학급은 방 정원까지). 방에 사람이 연결되어 있을 때만 움직입니다. 연상 사전(`content/bots/ko-associations.json`)이 모든 단어를 아는 팩에서만 봇 스파이마스터를 쓸 수 있습니다 — 지금은 자체 제작 팩 400/400 |
 | 교사 복구 키 | 클래스를 만들 때 한 번만 보여 줍니다. 다른 기기에서 이어서 관리할 때 씁니다. 잃어버리면 같은 브라우저로만 관리할 수 있습니다 |
 | 방 정리 (보존 정책) | 마지막 활동 뒤 `ROOM_TTL_HOURS`(기본 24시간)가 지나면 Durable Object alarm 이 소켓을 닫고 방 데이터·초대 정보를 지웁니다. 카드 규칙이 아닙니다. `wrangler.jsonc` 의 `vars` 에서 바꿉니다 |
 | 방장 이양 | 방장 연결이 `HOST_GRACE_SECONDS`(기본 180초) 넘게 끊기면 가장 먼저 들어온 온라인 참가자에게 **관리 권한만** 넘어갑니다. 게임 역할·정답 열람권은 바뀌지 않습니다 |
@@ -131,12 +135,14 @@ Workers Free 플랜에서도 SQLite 저장소를 쓰는 Durable Object 를 쓸 �
 
 ```
 src/client/   화면(React), 접근성, 효과음, 로컬 표시 상태
-src/server/   Worker 라우팅·세션·Origin 검사(index.ts), 게임방 DO(room.ts)·방 로직(room-logic.ts), 클래스 DO(classroom.ts)·클래스 로직(class-logic.ts)
+src/server/   Worker 라우팅·세션·Origin 검사(index.ts), 게임방 DO(room.ts)·방 로직(room-logic.ts), 클래스 DO(classroom.ts)·클래스 로직(class-logic.ts),
+              봇(bots/: 연상 사전 lexicon.ts, 판단 brain.ts, 방 안 차례 관리 room-bots.ts)
+content/bots/ 봇 연상 사전 (자체 제작, 서버 전용)
 src/game/     규칙 엔진(engine.ts), 준비(setup.ts), 규칙 프로필(rulesets.ts), 역할별 정보 분리(projection.ts), 콘텐츠 검증(content.ts)
 src/shared/   공개 프로토콜(zod 스키마)·표시용 타입. 비밀 키 원본 없음
 content/      서버용 단어·키·출처 manifest, JSON Schema, CSV 예시
 public/assets 서비스용 그림과 manifest.json
-tests/        unit(엔진·방·클래스), e2e(멀티클라이언트·경쟁·보안·재시작·학급 모드), load(학급 봇 시뮬레이션), fixtures(합성 테스트 데이터)
+tests/        unit(엔진·방·클래스·봇), e2e(멀티클라이언트·경쟁·보안·재시작·학급 모드·봇), load(학급 부하 시뮬레이션), fixtures(합성 테스트 데이터)
 docs/         규칙 대응표, 콘텐츠 현황, 검증 보고서
 scripts/      그림 변환, 콘텐츠 검사·가져오기, 릴리스 점검
 ```

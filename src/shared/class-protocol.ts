@@ -6,6 +6,8 @@ import type { ClassView } from './classroom.ts';
 
 const id = z.string().min(1).max(64);
 const roomCap = z.number().int().min(4).max(8);
+const botLevel = z.enum(['easy', 'normal', 'hard']);
+const botFill = z.object({ count: z.number().int().min(1).max(8), level: botLevel });
 
 export const classCommandSchema = z.discriminatedUnion('type', [
   // 학생
@@ -15,7 +17,11 @@ export const classCommandSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('help') }),
   z.object({ type: z.literal('dismissNotice') }),
   // 방장
-  z.object({ type: z.literal('createRoom'), name: z.string().min(1).max(40), capacity: roomCap }),
+  // 방 만들기: 지정된 학생 방장, 또는 선생님(시뮬레이션 방). bots = 처음부터 봇으로 채울 자리
+  z.object({ type: z.literal('createRoom'), name: z.string().min(1).max(40), capacity: roomCap, bots: botFill.optional() }),
+  // 봇 넣기·빼기: 그 방의 방장 또는 선생님, 대기 중인 방만
+  z.object({ type: z.literal('addBots'), roomId: id, count: z.number().int().min(1).max(8), level: botLevel }),
+  z.object({ type: z.literal('removeBot'), roomId: id, botId: id }),
   z.object({ type: z.literal('approve'), roomId: id, memberId: id, expectedRosterVersion: z.number().int().nonnegative() }),
   z.object({ type: z.literal('reject'), roomId: id, memberId: id }),
   z.object({ type: z.literal('removeFromRoom'), roomId: id, memberId: id, expectedRosterVersion: z.number().int().nonnegative() }),

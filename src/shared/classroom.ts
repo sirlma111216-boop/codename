@@ -2,6 +2,7 @@
 // 단어판·정답·힌트 초안·방 안 토론은 없다 (그것은 각 게임방 연결로만 간다).
 
 import type { EndReason, Team } from './view.ts';
+import type { BotLevel } from './bots.ts';
 
 export const CLASS_PROTOCOL_VERSION = 1;
 
@@ -27,8 +28,10 @@ export interface ClassRoomView {
   hostMemberId: string | null;
   hostNickname: string | null;
   status: ClassRoomStatus;
+  /** 이 방에 앉은 봇 수 (시뮬레이션용 가짜 참가자) */
+  botCount: number;
   /** 아래는 교사, 그 방의 방장·참가자에게만 채워진다 */
-  seats?: { memberId: string; nickname: string; online: boolean }[];
+  seats?: { memberId: string; nickname: string; online: boolean; bot?: boolean }[];
   requests?: { memberId: string; nickname: string; at: number }[];
   rosterVersion?: number;
   synced?: boolean;
@@ -88,7 +91,7 @@ export interface ClassRoomSync {
   name: string;
   capacity: number;
   hostMemberId: string | null;
-  members: { memberId: string; nickname: string; sessionHash: string | null }[];
+  members: { memberId: string; nickname: string; sessionHash: string | null; bot?: { level: BotLevel } | null }[];
   teacherHashes: string[];
   closed: boolean;
   closeReason: 'teacher' | 'host' | 'classEnded' | null;

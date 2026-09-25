@@ -5,6 +5,7 @@
 import { writeFileSync } from 'node:fs';
 import { isBoardPlayable, isOfficialPlayable, validatePack } from '../src/game/content.ts';
 import { loadPackDir, packChecksum, packDirs, structuralIssues } from './content-lib.ts';
+import { LEXICON } from '../src/server/bots/lexicon.ts';
 
 const write = process.argv.includes('--write');
 const lines: string[] = [];
@@ -65,6 +66,12 @@ for (const dir of packDirs()) {
   }
   for (const w of warnings) say(`- ⚠️ ${w.message}`);
   say(`- 게임 준비 가능: ${isBoardPlayable(pack) ? '예' : '아니오'}${m.kind !== 'official' ? ' (비공식 — 정체 배치는 원본 키가 아닌 무작위 배치)' : ''}`);
+  if (pack.cards.length) {
+    // 봇 스파이마스터는 연상 사전에 있는 단어만 다룰 수 있다 (없으면 그 팩에서는 봇을 추측자로만 쓴다)
+    const words = pack.cards.flatMap((c) => (c.faceB !== null ? [c.faceA, c.faceB] : [c.faceA]));
+    const known = words.filter((w) => LEXICON.hasEntry(w)).length;
+    say(`- 봇 연상 사전: ${known}/${words.length} 단어 — ${known === words.length ? '봇 스파이마스터 사용 가능' : '봇 스파이마스터 사용 불가 (content/bots/ko-associations.json 에 빠진 단어를 더해야 함)'}`);
+  }
   say();
 }
 

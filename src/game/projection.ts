@@ -6,11 +6,15 @@ import type { CardView, GameView } from '../shared/view.ts';
 import { guessLimit, remainingAgents, rosterEntry } from './engine.ts';
 import type { GameState } from './types.ts';
 
-export function projectGame(s: GameState, viewerId: string, packTitle: string): GameView {
+/**
+ * opts.watchKey: 참가자가 모두 봇인 게임을 관전하는 사람에게 정답을 보여 준다.
+ * 사람 참가자가 한 명이라도 있으면 호출하는 쪽(room-logic)이 켜지 않는다.
+ */
+export function projectGame(s: GameState, viewerId: string, packTitle: string, opts: { watchKey?: boolean } = {}): GameView {
   const me = rosterEntry(s, viewerId);
   const isSpymaster = me?.role === 'spymaster';
   const finished = s.phase === 'finished';
-  const showKey = isSpymaster || finished;
+  const showKey = isSpymaster || finished || (!me && !!opts.watchKey);
 
   const cards: CardView[] = s.words.map((word, index) => {
     const r = s.revealed[index];

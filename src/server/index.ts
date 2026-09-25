@@ -17,6 +17,7 @@ import {
   sha256Hex,
 } from './security.ts';
 import { cleanNickname } from './room-logic.ts';
+import { soloConfigSchema } from '../shared/protocol.ts';
 
 export { GameRoomDurableObject } from './room.ts';
 export { ClassroomDurableObject } from './classroom.ts';
@@ -171,6 +172,23 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
     return fail(500, 'createFailed', '방을 만들지 못했습니다.');
   }
 
+  // 혼자 하기: 나 + 봇. 초대·다른 참가자 없이 바로 게임을 시작한다.
+  if (path === '/api/solo' && method === 'POST') {
+    if (env.ALLOW_SOLO === 'false') return fail(403, 'soloDisabled', '이 서버에서는 혼자 하기를 쓰지 않습니다.');
+    const body = await readJson(request);
+    const nickname = cleanNickname(typeof body?.nickname === 'string' ? body.nickname : '');
+    if (!nickname) return fail(400, 'badNickname', '닉네임을 입력하세요.');
+    const parsed = soloConfigSchema.safeParse(body?.config);
+    if (!parsed.success) return fail(400, 'badConfig', '혼자 하기 설정이 올바르지 않습니다.');
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const roomId = randomToken(16);
+      const res = await roomStub(env, roomId).createSolo({ roomId, sessionHash: ctx.sessionHash, nickname, config: parsed.data });
+      if (res.ok) return json({ ok: true, roomId });
+      if (res.code !== 'exists') return fail(400, res.code, res.message);
+    }
+    return fail(500, 'createFailed', '방을 만들지 못했습니다.');
+  }
+
   const m = path.match(/^\/api\/rooms\/([^/]+)\/(join|status|ws)$/);
   if (m) {
     const roomId = m[1] as string;
@@ -192,6 +210,7 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
         full: [403, '방 인원이 가득 찼습니다.'],
         badNickname: [400, '닉네임을 입력하세요.'],
         classManaged: [403, '학급 방은 클래스 화면에서 참가 신청으로 들어갑니다.'],
+        solo: [403, '혼자 하기 방에는 다른 사람이 들어갈 수 없습니다.'],
       };
       const [status, message] = messages[res.code] ?? [400, '입장하지 못했습니다.'];
       return fail(status, res.code, message);

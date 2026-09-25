@@ -1,5 +1,7 @@
 // HTTP API. 세션은 서버가 HttpOnly 쿠키로 관리하므로 여기서는 값에 손대지 않는다.
 
+import type { SoloConfig } from '../shared/bots.ts';
+
 export class ApiError extends Error {
   status: number;
   code: string;
@@ -38,6 +40,7 @@ export const api = {
   session: () => call<{ needsPassword: boolean; admitted: boolean }>('/api/session', { method: 'POST', body: '{}' }),
   entry: (password: string) => call<{ ok: true }>('/api/entry', { method: 'POST', body: JSON.stringify({ password }) }),
   createRoom: (nickname: string) => call<{ roomId: string; invite: string }>('/api/rooms', { method: 'POST', body: JSON.stringify({ nickname }) }),
+  createSolo: (nickname: string, config: SoloConfig) => call<{ roomId: string }>('/api/solo', { method: 'POST', body: JSON.stringify({ nickname, config }) }),
   join: (roomId: string, inviteToken: string, nickname: string) =>
     call<{ ok: true }>(`/api/rooms/${encodeURIComponent(roomId)}/join`, { method: 'POST', body: JSON.stringify({ inviteToken, nickname }) }),
   status: (roomId: string) => call<{ status: 'member' | 'notMember' | 'gone' | 'banned' }>(`/api/rooms/${encodeURIComponent(roomId)}/status`),

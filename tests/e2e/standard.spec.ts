@@ -97,7 +97,7 @@ test('표준 대전 4인 + 관전자: 정보 격리, 추측, 암살자 종료, �
   await host.page.screenshot({ path: 'screens/standard-finished.png', fullPage: false });
 
   // 같은 방에서 재경기
-  await host.page.getByRole('button', { name: '대기실로 (같은 방에서 새 게임)' }).click();
+  await host.page.getByRole('button', { name: '대기실로', exact: true }).click();
   for (const p of all) await expect(p.page.getByRole('heading', { name: '작전 대기실' })).toBeVisible();
   await host.page.getByRole('button', { name: '게임 시작' }).click();
   await waitGame(all);

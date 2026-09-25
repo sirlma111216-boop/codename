@@ -19,6 +19,8 @@ export interface Env {
   CLASS_MAX_ROOMS: string;
   /** "false" 면 독립 게임방 만들기를 막는다 (학교 전용 배포용) */
   ALLOW_STANDALONE_ROOMS: string;
+  /** "false" 면 혼자 하기(봇과 게임)를 막는다 */
+  ALLOW_SOLO?: string;
   /** 선택: 공용 입장 암호 (`wrangler secret put ENTRY_PASSWORD`). 참가자 계정이 아니다. */
   ENTRY_PASSWORD?: string;
 }

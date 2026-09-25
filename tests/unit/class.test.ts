@@ -103,8 +103,10 @@ describe('방장 지정과 방 만들기', () => {
     expect(c.rooms[room]?.seats).toEqual([ids[0]]);
     expect(c.members[ids[0]!]?.assignment).toBe(room);
     expect(code(c, S(ids[0]!), { type: 'createRoom', name: 'y', capacity: 6 })).toBe('alreadyOwns');
-    // 학생·교사는 방장 권한 없이 만들 수 없다
-    expect(code(c, T, { type: 'createRoom', name: 't', capacity: 6 })).toBe('forbidden');
+    // 선생님은 학생 방장 없이 방을 만들 수 있다 (시뮬레이션 방). 선생님은 좌석을 쓰지 않는다
+    const t = ok(c, T, { type: 'createRoom', name: 't', capacity: 6 }).roomId!;
+    expect(c.rooms[t]?.hostMemberId).toBeNull();
+    expect(c.rooms[t]?.seats).toEqual([]);
   });
 
   it('정원은 교사가 허용한 범위(기본 4~8) 안에서만', () => {
