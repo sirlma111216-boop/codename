@@ -1,7 +1,8 @@
 // 방(대기실·권한·채팅·타이머)과 게임 명령 처리. 입출력이 없는 함수라 테스트할 수 있다.
 // 실제 저장·전송은 room.ts(Durable Object)가 한다.
 
-import { applyAction, rosterEntry } from '../game/engine.ts';
+import { applyAction, remainingAgents, rosterEntry } from '../game/engine.ts';
+import type { ClassRoomSync, RoomSummary } from '../shared/classroom.ts';
 import { projectGame } from '../game/projection.ts';
 import { validateRoster, type Seat } from '../game/rulesets.ts';
 import { createGame } from '../game/setup.ts';
@@ -24,7 +25,28 @@ export interface Member {
   joinedAt: number;
   team: Team | null;
   role: SeatRole;
+  /** 학급 방에서 쓰는 준비 완료 표시 */
+  ready?: boolean;
 }
+
+/** 학급 모드 방의 클래스 연결 정보. 명단은 클래스가 버전 붙여 보낸 것만 반영한다. */
+export interface ClassLink {
+  classId: string;
+  className: string;
+  roomName: string;
+  syncVersion: number;
+  capacity: number;
+  teacherHashes: string[];
+  closed: boolean;
+  closeReason: ClassRoomSync['closeReason'];
+  /** 시작 잠금은 받았고 클래스에 게임 확정을 아직 못 알린 경우 */
+  pendingConfirm: { opId: string; gameId: string } | null;
+  /** 게임 뒤 대기실로 돌아왔고 클래스에 명단 잠금 해제를 아직 못 알린 경우 */
+  pendingRelease: string | null;
+}
+
+/** 관전하는 교사의 소켓 표시 */
+export const TEACHER_ID = 'teacher';
 
 export interface DedupEntry {
   id: string;
@@ -54,6 +76,7 @@ export interface RoomState {
   nextChatId: number;
   timer: { endsAt: number; seconds: number; startedBy: string } | null;
   dedup: DedupEntry[];
+  classLink: ClassLink | null;
 }
 
 export interface RoomEnv {
@@ -91,6 +114,7 @@ export function migrateRoom(raw: unknown): RoomState | null {
     nextChatId: r.nextChatId ?? 1,
     timer: r.timer ?? null,
     dedup: r.dedup ?? [],
+    classLink: r.classLink ?? null,
   };
 }
 
@@ -148,6 +172,7 @@ export function createRoom(roomId: string, sessionHash: string, nickname: string
     nextChatId: 1,
     timer: null,
     dedup: [],
+    classLink: null,
   };
 }
 
@@ -155,9 +180,11 @@ export function memberBySession(room: RoomState, sessionHash: string): Member | 
   return Object.values(room.members).find((m) => m.sessionHash === sessionHash);
 }
 
-export type JoinResult = { ok: true; memberId: string; created: boolean } | { ok: false; code: 'banned' | 'badInvite' | 'locked' | 'full' | 'badNickname' };
+export type JoinResult = { ok: true; memberId: string; created: boolean } | { ok: false; code: 'banned' | 'badInvite' | 'locked' | 'full' | 'badNickname' | 'classManaged' };
 
 export function joinRoom(room: RoomState, sessionHash: string, inviteOk: boolean, nicknameRaw: string, env: RoomEnv): JoinResult {
+  // 학급 방은 독립 방의 초대 경로로 들어올 수 없다 (좌석은 클래스만 정한다)
+  if (room.classLink) return { ok: false, code: 'classManaged' };
   if (room.banned.includes(sessionHash)) return { ok: false, code: 'banned' };
   const existing = memberBySession(room, sessionHash);
   if (existing) return { ok: true, memberId: existing.id, created: false };
@@ -234,9 +261,21 @@ function cleanCustomWords(words: string[]): string[] {
  * 명령 하나를 room 에 적용한다(room 을 직접 바꾼다 — 호출자는 복사본을 넘긴다).
  * 멱등 처리(dedup)와 저장은 호출자가 한다.
  */
-export function applyCommand(room: RoomState, me: Member, msg: Extract<ClientMessage, { t: 'cmd' }>, env: RoomEnv, online: Set<string>): CommandResult {
+const CLASS_MANAGED_COMMANDS = new Set<Command['type']>(['lock', 'rotateInvite', 'kick', 'closeRoom', 'transferHost', 'reassignSeat']);
+
+export function applyCommand(
+  room: RoomState,
+  me: Member,
+  msg: Extract<ClientMessage, { t: 'cmd' }>,
+  env: RoomEnv,
+  online: Set<string>,
+  opts: { classStartApproved?: boolean } = {},
+): CommandResult {
   const cmd: Command = msg.cmd;
-  const isHost = me.id === room.hostId;
+  const cls = room.classLink;
+  const isHost = !!room.hostId && me.id === room.hostId;
+  if (cls && CLASS_MANAGED_COMMANDS.has(cmd.type)) return no('classManaged', '학급 방의 참가자·초대 관리는 클래스 화면에서 합니다.');
+  if (cls?.closed) return no('closed', '닫힌 방입니다.');
   const effects: CommandEffects = { closeSessions: [], remapSession: null, closeRoom: false };
   const done = (scope: 'all' | 'spymasters' = 'all'): CommandResult => {
     if (scope === 'all') room.revision++;
@@ -249,6 +288,8 @@ export function applyCommand(room: RoomState, me: Member, msg: Extract<ClientMes
   switch (cmd.type) {
     case 'setSeat': {
       if (!inLobby) return no('locked', '게임이 시작되면 팀과 역할이 잠깁니다.');
+      if (cls && (cmd.role === 'spectator' || !cmd.team)) return no('badInput', '학급 방에서는 빨강·파랑 중 한 팀을 골라야 합니다.');
+      me.ready = false; // 자리를 바꾸면 준비를 다시 누른다
       if (cmd.role === 'spectator') {
         me.team = null;
         me.role = 'spectator';
@@ -271,6 +312,7 @@ export function applyCommand(room: RoomState, me: Member, msg: Extract<ClientMes
     case 'setSettings': {
       if (!isHost) return hostOnly();
       if (!inLobby) return no('locked', '게임 중에는 설정을 바꿀 수 없습니다.');
+      if (cls && cmd.rulesetId && cmd.rulesetId !== 'cge2015-standard') return no('classStandardOnly', '학급 모드는 표준 대전으로 진행합니다. 소인원 변형은 독립 게임방에서 쓸 수 있습니다.');
       if (cmd.rulesetId) room.settings.rulesetId = cmd.rulesetId as RulesetId;
       if (cmd.packId) {
         const opt = packOptions(room.customWords).find((p) => p.packId === cmd.packId);
@@ -288,9 +330,36 @@ export function applyCommand(room: RoomState, me: Member, msg: Extract<ClientMes
       room.customWords = cleanCustomWords(cmd.words);
       return done();
     }
+    case 'setReady': {
+      if (!cls) return no('notSupported', '학급 방에서만 씁니다.');
+      if (!inLobby) return no('locked', '게임 중입니다.');
+      if (cmd.ready && (!me.team || me.role === 'spectator')) return no('noSeat', '먼저 팀과 역할을 고르세요.');
+      me.ready = cmd.ready;
+      return done();
+    }
+    case 'autoBalance': {
+      if (!cls) return no('notSupported', '학급 방에서만 씁니다.');
+      if (!isHost) return hostOnly();
+      if (!inLobby) return no('locked', '게임 중입니다.');
+      // 두 팀 인원 차이가 1명 이하가 되게 무작위로 나누고, 팀마다 한 명을 스파이마스터로 둔다
+      const people = Object.values(room.members).filter((m) => m.sessionHash);
+      for (let i = people.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [people[i], people[j]] = [people[j] as Member, people[i] as Member];
+      }
+      const firstTeam: Team = Math.random() < 0.5 ? 'red' : 'blue';
+      people.forEach((m, i) => {
+        m.team = i % 2 === 0 ? firstTeam : firstTeam === 'red' ? 'blue' : 'red';
+        m.role = i < 2 ? 'spymaster' : 'operative';
+        m.ready = false;
+      });
+      return done();
+    }
     case 'startGame': {
       if (!isHost) return hostOnly();
       if (!inLobby) return no('locked', '이미 게임이 진행 중입니다.');
+      // 학급 방은 클래스가 명단 버전을 잠근 뒤에만 시작한다 (room.ts 가 잠금을 받아 opts 로 알려 준다)
+      if (cls && !opts.classStartApproved) return no('needClassLock', '클래스의 명단 확인이 필요합니다.');
       const seats: Seat[] = Object.values(room.members)
         .filter((m) => m.sessionHash)
         .map((m) => ({ memberId: m.id, team: m.team, role: m.role }));
@@ -324,6 +393,10 @@ export function applyCommand(room: RoomState, me: Member, msg: Extract<ClientMes
       if (!room.game) return no('badInput', '이미 대기실입니다.');
       if (room.game.phase !== 'finished') return no('locked', '진행 중인 게임은 먼저 중단해야 합니다.');
       room.lastGame = { packId: room.game.setup.packId, cards: room.game.setup.cards };
+      if (cls) {
+        cls.pendingRelease = room.game.gameId; // 클래스에 명단 잠금 해제를 알린다 (room.ts)
+        for (const m of Object.values(room.members)) m.ready = false;
+      }
       room.game = null;
       room.timer = null;
       return done();
@@ -439,6 +512,152 @@ export function applyCommand(room: RoomState, me: Member, msg: Extract<ClientMes
   }
 }
 
+// ------------------------------------------------------------------ 학급 모드
+
+export function isTeacherSession(room: RoomState, sessionHash: string): boolean {
+  return !!room.classLink && !room.classLink.closed && room.classLink.teacherHashes.includes(sessionHash);
+}
+
+export interface ClassSyncOutcome {
+  room: RoomState | null;
+  result: 'created' | 'applied' | 'stale' | 'ignored' | 'mismatch';
+  /** 연결을 끊어야 하는 세션: removed = 명단에서 빠진 학생, replaced = 세션이 바뀐 자리·권한이 거둬진 교사 세션 */
+  closeSessions: { sessionHash: string; reason: 'removed' | 'replaced' }[];
+  closedNow: boolean;
+}
+
+/**
+ * 클래스가 보낸 명단을 반영한다. 버전이 더 새로울 때만 적용하므로 재전송·순서 바뀜에 안전하다.
+ * 게임이 진행 중이면 좌석을 더하거나 빼지 않고(클래스도 그러지 않는다) 세션·방장 변경만 반영한다.
+ */
+export function applyClassSync(room: RoomState | null, p: ClassRoomSync, env: RoomEnv): ClassSyncOutcome {
+  if (!room) {
+    if (p.closed) return { room: null, result: 'ignored', closeSessions: [], closedNow: false };
+    const r: RoomState = {
+      ...createRoom(p.roomId, '', '', env),
+      members: {},
+      hostId: '',
+      inviteToken: '',
+      classLink: {
+        classId: p.classId,
+        className: p.className,
+        roomName: p.name,
+        syncVersion: 0,
+        capacity: p.capacity,
+        teacherHashes: [],
+        closed: false,
+        closeReason: null,
+        pendingConfirm: null,
+        pendingRelease: null,
+      },
+    };
+    const out = applyClassSync(r, p, env);
+    return { ...out, result: out.result === 'applied' ? 'created' : out.result };
+  }
+  const link = room.classLink;
+  if (!link || link.classId !== p.classId) return { room, result: 'mismatch', closeSessions: [], closedNow: false };
+  if (p.syncVersion <= link.syncVersion) return { room, result: 'stale', closeSessions: [], closedNow: false };
+
+  // 닫힘: 명단은 그대로 두고(기록용) 진행 중 게임만 ‘수업 종료로 중단’. 연결 종료는 room.ts 가 'closed' 로 한다.
+  if (p.closed) {
+    const wasClosed = link.closed;
+    if (!wasClosed && gameActive(room) && room.game) {
+      const res = applyAction(room.game, '', { type: 'abort', reason: 'classEnded' }, env.now);
+      if (res.ok) room.game = res.state;
+    }
+    link.closed = true;
+    link.closeReason = p.closeReason;
+    link.syncVersion = p.syncVersion;
+    room.timer = null;
+    room.revision++;
+    room.lastActivity = env.now;
+    return { room, result: 'applied', closeSessions: [], closedNow: !wasClosed };
+  }
+
+  const closeSessions: ClassSyncOutcome['closeSessions'] = [];
+  const active = gameActive(room);
+  const inRoster = (id: string) => !!room.game && !!rosterEntry(room.game, id);
+  let rosterChanged = false;
+
+  const incoming = new Map(p.members.map((m) => [m.memberId, m]));
+  for (const [id, m] of Object.entries(room.members)) {
+    const next = incoming.get(id);
+    if (!next) {
+      if (m.sessionHash) closeSessions.push({ sessionHash: m.sessionHash, reason: 'removed' });
+      if (active && inRoster(id)) m.sessionHash = null; // 진행 중인 게임 자리는 남긴다
+      else delete room.members[id];
+      rosterChanged = true;
+      continue;
+    }
+    if (m.sessionHash !== next.sessionHash) {
+      if (m.sessionHash) closeSessions.push({ sessionHash: m.sessionHash, reason: 'replaced' });
+      m.sessionHash = next.sessionHash;
+    }
+    m.nickname = next.nickname;
+  }
+  for (const [id, m] of incoming) {
+    if (room.members[id]) continue;
+    // 진행 중에는 새 학생을 게임에 끼워 넣지 않는다 (들어와도 관전만 되고, 클래스는 애초에 보내지 않는다)
+    room.members[id] = { id, nickname: m.nickname, sessionHash: m.sessionHash, joinedAt: env.now, team: null, role: 'spectator', ready: false };
+    rosterChanged = true;
+  }
+  for (const h of link.teacherHashes) if (!p.teacherHashes.includes(h)) closeSessions.push({ sessionHash: h, reason: 'replaced' });
+  const hostChanged = room.hostId !== (p.hostMemberId ?? '');
+  const capChanged = link.capacity !== p.capacity;
+  room.hostId = p.hostMemberId ?? '';
+  link.roomName = p.name;
+  link.capacity = p.capacity;
+  link.className = p.className;
+  link.teacherHashes = p.teacherHashes.slice();
+  link.syncVersion = p.syncVersion;
+  // 운영상 변경(명단·정원·방장)은 모두에게 보이고 준비 상태를 초기화한다
+  if (rosterChanged || capChanged || hostChanged) for (const m of Object.values(room.members)) m.ready = false;
+
+  room.revision++;
+  room.lastActivity = env.now;
+  return { room, result: 'applied', closeSessions, closedNow: false };
+}
+
+/** 학급 방 시작 조건: 정원 충족, 전원 온라인·준비, 역할 조건, 두 팀 인원 차이 1명 이하 */
+export function classStartProblems(room: RoomState, online: Set<string>): string[] {
+  const link = room.classLink;
+  if (!link) return [];
+  const problems: string[] = [];
+  const people = Object.values(room.members).filter((m) => m.sessionHash);
+  if (people.length !== link.capacity) problems.push(`정원 ${link.capacity}명이 모두 들어와야 시작할 수 있습니다 (지금 ${people.length}명).`);
+  const offline = people.filter((m) => !online.has(m.id)).map((m) => m.nickname);
+  if (offline.length) problems.push(`접속하지 않은 사람: ${offline.join(', ')}`);
+  const noSeat = people.filter((m) => !m.team || m.role === 'spectator').map((m) => m.nickname);
+  if (noSeat.length) problems.push(`팀·역할을 고르지 않은 사람: ${noSeat.join(', ')}`);
+  const notReady = people.filter((m) => !m.ready).map((m) => m.nickname);
+  if (notReady.length) problems.push(`준비 완료를 누르지 않은 사람: ${notReady.join(', ')}`);
+  const red = people.filter((m) => m.team === 'red').length;
+  const blue = people.filter((m) => m.team === 'blue').length;
+  if (Math.abs(red - blue) > 1) problems.push(`두 팀 인원 차이는 1명 이하여야 합니다 (빨강 ${red} · 파랑 ${blue}).`);
+  const check = validateRoster('cge2015-standard', people.filter((m) => m.team).map((m) => ({ memberId: m.id, team: m.team, role: m.role })));
+  if (!check.ok) problems.push(...check.problems);
+  return [...new Set(problems)];
+}
+
+/** 클래스에 보내는 공개 진행 요약 (정답·단어·힌트 없음) */
+export function roomSummary(room: RoomState, online: Set<string>): { readyCount: number; onlineCount: number; summary: RoomSummary } {
+  const people = Object.values(room.members).filter((m) => m.sessionHash);
+  const g = room.game;
+  return {
+    readyCount: people.filter((m) => m.ready).length,
+    onlineCount: people.filter((m) => online.has(m.id)).length,
+    summary: {
+      phase: !g ? 'lobby' : g.phase === 'finished' ? 'finished' : 'playing',
+      gameId: g?.gameId ?? null,
+      turnTeam: g && g.phase !== 'finished' ? g.turnTeam : null,
+      remaining: g ? { red: remainingAgents(g, 'red'), blue: remainingAgents(g, 'blue') } : null,
+      clueCount: g?.clues.length ?? 0,
+      winner: g?.winner ?? null,
+      endReason: g?.endReason ?? null,
+    },
+  };
+}
+
 export function recordDedup(room: RoomState, entry: DedupEntry) {
   room.dedup.push(entry);
   if (room.dedup.length > DEDUP_KEEP) room.dedup = room.dedup.slice(-DEDUP_KEEP);
@@ -450,6 +669,8 @@ export function isSpymasterViewer(room: RoomState, memberId: string): boolean {
 
 export function projectRoom(room: RoomState, memberId: string, online: Set<string>, env: RoomEnv): RoomView {
   const me = room.members[memberId];
+  const teacherView = memberId === TEACHER_ID;
+  const cls = room.classLink;
   const game = room.game;
   const members: MemberView[] = Object.values(room.members)
     .sort((a, b) => a.joinedAt - b.joinedAt)
@@ -466,19 +687,19 @@ export function projectRoom(room: RoomState, memberId: string, online: Set<strin
           role = 'spectator';
         }
       }
-      return { id: m.id, nickname: m.nickname, team, role, online: online.has(m.id), isHost: m.id === room.hostId, detached: !m.sessionHash, joinedAt: m.joinedAt };
+      return { id: m.id, nickname: m.nickname, team, role, online: online.has(m.id), isHost: m.id === room.hostId, detached: !m.sessionHash, joinedAt: m.joinedAt, ready: !!m.ready };
     });
   return {
     roomId: room.roomId,
     revision: room.revision,
     serverNow: env.now,
-    you: { memberId, isHost: memberId === room.hostId, nickname: me?.nickname ?? '' },
+    you: { memberId, isHost: !!room.hostId && memberId === room.hostId, nickname: teacherView ? '선생님 (관전)' : (me?.nickname ?? '') },
     members,
     hostId: room.hostId,
     hostOfflineSince: room.hostOfflineSince,
     hostGraceSeconds: env.hostGraceSeconds,
     locked: room.locked,
-    inviteToken: room.inviteToken,
+    inviteToken: cls ? '' : room.inviteToken,
     settings: { ...room.settings },
     customWords: room.customWords.slice(),
     packs: packOptions(room.customWords),
@@ -486,5 +707,8 @@ export function projectRoom(room: RoomState, memberId: string, online: Set<strin
     chat: room.chat.slice(),
     timer: room.timer ? { ...room.timer } : null,
     ttlHours: env.ttlHours,
+    classMode: cls
+      ? { classId: cls.classId, className: cls.className, roomName: cls.roomName, capacity: cls.capacity, isTeacher: teacherView, startProblems: game ? [] : classStartProblems(room, online) }
+      : null,
   };
 }

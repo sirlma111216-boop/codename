@@ -50,7 +50,8 @@ export type EndReason =
   | 'allAgentsFound' // 한 팀의 요원이 모두 덮였다 (p.5)
   | 'assassin' // 암살자 접촉 (p.4~5)
   | 'coopEnemyComplete' // 협력 변형: 상대 요원이 모두 덮여 패배 (p.8)
-  | 'aborted'; // 방장이 게임을 중단했다(운영 기능, 승패 없음)
+  | 'aborted' // 방장이 게임을 중단했다(운영 기능, 승패 없음)
+  | 'classEnded'; // 수업 종료·교사 폐쇄로 중단(운영 기능, 승패 없음)
 
 export interface RevealInfo {
   identity: Identity;

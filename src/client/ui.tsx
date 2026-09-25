@@ -199,6 +199,34 @@ export function SoundToggle() {
   );
 }
 
+/** 연결 상태 배너: 게임방·클래스 연결이 함께 쓴다 */
+export function ConnectionOverlay({ conn, fullPage }: { conn: { status: string; attempt: number; reconnectNow(): void }; fullPage?: boolean }) {
+  const m = useManifest();
+  const img = imageUrl(m, 'reconnecting');
+  if (!fullPage && conn.status === 'open') return null;
+  const text =
+    conn.status === 'offline'
+      ? '인터넷 연결이 끊겼습니다. 연결되면 자동으로 다시 붙습니다.'
+      : conn.status === 'connecting'
+        ? '연결하는 중…'
+        : `연결이 끊겨 다시 연결하는 중… (${conn.attempt}번째 시도)`;
+  return (
+    <div className={fullPage ? 'center-page' : 'conn-banner'} role="status" aria-live="polite">
+      <div className="conn-box">
+        {img && <img src={img} alt="" width={64} height={64} />}
+        <div>
+          <p>{text}</p>
+          {conn.status !== 'connecting' && (
+            <button type="button" className="btn btn-small" onClick={() => conn.reconnectNow()}>
+              지금 다시 연결
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function copyText(text: string): Promise<boolean> {
   if (navigator.clipboard?.writeText) {
     return navigator.clipboard.writeText(text).then(

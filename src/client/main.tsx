@@ -19,6 +19,19 @@ if (location.pathname === '/join' && location.hash.length > 1) {
   history.replaceState(null, '', '/join');
 }
 
+if (location.pathname === '/c/join' && location.hash.length > 1) {
+  const inv = parseInvite(location.hash);
+  if (inv) {
+    try {
+      sessionStorage.setItem('codename.classInvite', `${inv.roomId}.${inv.token}`);
+    } catch {
+      /* 아래 전역 값으로 대신한다 */
+    }
+    (window as unknown as { __classInvite?: string }).__classInvite = `${inv.roomId}.${inv.token}`;
+  }
+  history.replaceState(null, '', '/c/join');
+}
+
 // 효과음은 사용자 동작 뒤에만 켤 수 있다.
 const unlock = () => {
   unlockAudio();

@@ -41,7 +41,20 @@ export const api = {
   join: (roomId: string, inviteToken: string, nickname: string) =>
     call<{ ok: true }>(`/api/rooms/${encodeURIComponent(roomId)}/join`, { method: 'POST', body: JSON.stringify({ inviteToken, nickname }) }),
   status: (roomId: string) => call<{ status: 'member' | 'notMember' | 'gone' | 'banned' }>(`/api/rooms/${encodeURIComponent(roomId)}/status`),
+  // 학급 모드
+  createClass: (name: string, capacity: number) =>
+    call<{ classId: string; invite: string; recoveryKey: string }>('/api/classes', { method: 'POST', body: JSON.stringify({ name, capacity }) }),
+  joinClass: (classId: string, inviteToken: string, nickname: string) =>
+    call<{ ok: true }>(`/api/classes/${encodeURIComponent(classId)}/join`, { method: 'POST', body: JSON.stringify({ inviteToken, nickname }) }),
+  classStatus: (classId: string) =>
+    call<{ status: 'teacher' | 'member' | 'notMember' | 'gone' | 'banned' | 'ended' }>(`/api/classes/${encodeURIComponent(classId)}/status`),
+  recoverTeacher: (classId: string, key: string) =>
+    call<{ ok: true }>(`/api/classes/${encodeURIComponent(classId)}/recover`, { method: 'POST', body: JSON.stringify({ key }) }),
 };
+
+export function classInviteLink(classId: string, token: string): string {
+  return `${location.origin}/c/join#${classId}.${token}`;
+}
 
 /** 초대 문자열 "roomId.token" 을 나눈다. 링크 전체를 붙여 넣어도 된다. */
 export function parseInvite(input: string): { roomId: string; token: string } | null {

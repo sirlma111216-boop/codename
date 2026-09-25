@@ -40,6 +40,9 @@ export const commandSchema = z.discriminatedUnion('type', [
   }),
   z.object({ type: z.literal('setCustomWords'), words: z.array(z.string().max(40)).max(CUSTOM_WORDS_MAX_COUNT) }),
   z.object({ type: z.literal('startGame') }),
+  // 학급 방: 준비 완료 / 팀 고르게 나누기(방장)
+  z.object({ type: z.literal('setReady'), ready: z.boolean() }),
+  z.object({ type: z.literal('autoBalance') }),
   z.object({ type: z.literal('backToLobby') }),
   z.object({ type: z.literal('chat'), text: z.string().min(1).max(400) }),
   z.object({ type: z.literal('timerStart') }),
@@ -85,4 +88,4 @@ export type ServerMessage =
   | { t: 'ack'; commandId: string; ok: true }
   | { t: 'ack'; commandId: string; ok: false; code: ErrorCode; message: string }
   | { t: 'error'; code: ErrorCode; message: string }
-  | { t: 'bye'; reason: 'kicked' | 'closed' | 'expired' | 'protocol' | 'replaced' };
+  | { t: 'bye'; reason: 'kicked' | 'closed' | 'expired' | 'protocol' | 'replaced' | 'removed' };

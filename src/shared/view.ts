@@ -80,6 +80,8 @@ export interface MemberView {
   /** 게임 중 자리 주인의 연결(쿠키)이 없어진 상태 — 방장이 새 세션을 지정할 수 있다 */
   detached: boolean;
   joinedAt: number;
+  /** 학급 방: 준비 완료 */
+  ready: boolean;
 }
 
 export interface PackOption {
@@ -126,4 +128,6 @@ export interface RoomView {
   chat: ChatMessage[];
   timer: { endsAt: number; seconds: number; startedBy: string } | null;
   ttlHours: number;
+  /** 학급 모드 방이면 채워진다. 참가자 관리(초대·강퇴 등)는 클래스가 한다 */
+  classMode: { classId: string; className: string; roomName: string; capacity: number; isTeacher: boolean; startProblems: string[] } | null;
 }

@@ -27,6 +27,7 @@ export function endText(g: GameView): { title: string; detail: string } {
   const w = g.winner;
   const reason: EndReason | null = g.endReason;
   if (reason === 'aborted') return { title: '게임 중단', detail: '방장이 게임을 중단했습니다. 승패는 기록하지 않습니다.' };
+  if (reason === 'classEnded') return { title: '수업 종료로 중단', detail: '선생님이 수업을 끝내거나 방을 닫아 게임이 중단되었습니다. 승패는 기록하지 않습니다.' };
   if (g.coopTeam) {
     if (reason === 'allAgentsFound' && w === g.coopTeam) return { title: '임무 성공', detail: `우리 팀 요원을 모두 찾았습니다. 점수: ${g.coopScore ?? 0}점 (상대 더미에 남은 요원 수, 룰북 p.8)` };
     if (reason === 'assassin') return { title: '임무 실패', detail: '암살자와 접촉했습니다. 협력 변형에서는 점수가 없습니다.' };
@@ -62,7 +63,7 @@ export function logText(e: LogEntry, members: MemberView[]): string {
     case 'spymasterReplaced':
       return `${TEAM_NAME[e.team]} 스파이마스터 교체 (방장 승인)`;
     case 'finish':
-      return e.reason === 'aborted' ? '게임 중단' : e.winner ? `게임 종료 — ${TEAM_NAME[e.winner]} 팀 ${e.reason === 'coopEnemyComplete' ? '(가상 상대) ' : ''}승리` : '게임 종료';
+      return e.reason === 'aborted' ? '게임 중단' : e.reason === 'classEnded' ? '수업 종료로 중단' : e.winner ? `게임 종료 — ${TEAM_NAME[e.winner]} 팀 ${e.reason === 'coopEnemyComplete' ? '(가상 상대) ' : ''}승리` : '게임 종료';
   }
 }
 

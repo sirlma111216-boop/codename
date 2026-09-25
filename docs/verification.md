@@ -21,6 +21,17 @@
 | 8 | 배포 | `npm run release:check` (typecheck·lint·unit·build·번들 누출·wrangler 설정·콘텐츠). production 배포 후 HTTP 점검(세션 쿠키 플래그, 다른 Origin POST 403, `/api/*` 오류는 JSON, SPA 경로, 그림 캐시 헤더) + **production 에서 e2e 5개 시나리오**(`E2E_BASE_URL=https://codename.sirlma.workers.dev npm run test:e2e`) | 통과 |
 | 9 | 접근성·미술 | e2e(mobile 360×740): 5열 유지, 가로 스크롤 없음, 단어 잘림 0, 카드 폭 > 50px, 확정 창. 스크린숏 눈 검사(데스크톱·모바일). 코드: 화살표 키 이동(roving tabindex)·포커스 표시·aria-live 공개 안내·`prefers-reduced-motion`·팀 = 색 + 글자 + 기호(◆/●/○/✕)·그림 없으면 단색 대체 | 통과 |
 
+## 학급 모드 (addendum)
+
+| 묶음 | 방법 | 결과 |
+|---|---|---|
+| 클래스 로직 | 단위 `class.test.ts` 25개 · `room-class.test.ts` 11개 (전체 단위 테스트 89개) (정원·권한·신청·승인 경쟁·시작 잠금·반영 기록·수업 종료·60명/15방·projection) | 통과 |
+| 실제 화면 흐름 | 브라우저 `classroom.spec.ts` (교사 1 + 학생 5, 독립 context): 생성·QR·방장 지정·방 생성·신청·승인·입장·준비·시작·교사 공개 관전(정답 없음)·게임 중 공지·지각생 차단·수업 종료 | 통과 (로컬) |
+| 재시작 복원 | 브라우저 `class-restart.spec.ts`: 게임 중 런타임 종료·재시작 → 교사 대시보드·배정·방장·게임·명단 잠금 해제 복원 | 통과 (로컬) |
+| 규모·경쟁·권한 | 봇 시뮬레이션 `tests/load/class-sim.ts` (flow24·race·perm·load60·rooms15) | 결과와 측정값: [class-sim/local.md](class-sim/local.md), [class-sim/production.md](class-sim/production.md) |
+
+자세한 대응표: [classroom.md §8](classroom.md#8-검증-addendum-8-대응표).
+
 ## 실행하지 않은 것 / 한계
 
 - **staging 환경은 배포하지 않았다.** 대신 production 에서 직접 WebSocket·새로고침·초대 링크 입장을 검증했다. staging 은 `npm run deploy:staging` 으로 만들 수 있다(별도 Worker·별도 Durable Object 저장소).
@@ -30,6 +41,8 @@
 - Safari·Firefox·실제 휴대폰은 검사하지 않았다(Chromium 만).
 - 익명 사용자가 다른 브라우저로 다시 오는 것까지 완벽히 막지는 못한다(초대 갱신·방 잠금으로 보완).
 - 한국어 정식판 규칙과의 차이는 확인하지 않았다.
+- 학급 모드 60명은 한 PC 의 봇으로 측정했다. 실제 학교 와이파이·휴대폰 60대는 재현하지 않았다. 60명 초과는 검증하지 않았다.
+- 클래스↔방 RPC 실패는 단위 테스트와 런타임 재시작으로 재현했고, 운영 환경에서 강제로 일으키지는 않았다.
 
 ## 다시 실행하는 법
 

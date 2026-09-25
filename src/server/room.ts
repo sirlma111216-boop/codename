@@ -1,20 +1,27 @@
-// 방 하나 = SQLite-backed Durable Object 하나. 이 객체가 유일한 진실의 원천이다.
-// WebSocket Hibernation API 를 쓴다: 휴면 뒤 깨어나면 메모리는 비어 있으므로
-// 상태는 저장소에서, 참가자 정보는 소켓 attachment 에서 복원한다.
+// 게임방 하나 = GameRoomDurableObject 하나. 보드·비밀 정보·턴·역할·게임 기록을 관리한다.
+// 독립 방(초대 링크)과 학급 방(클래스가 명단을 보냄) 두 가지로 쓰인다.
+// WebSocket Hibernation API 를 쓴다: 깨어나면 메모리는 비어 있으므로 상태는 저장소에서,
+// 참가자 정보는 소켓 attachment 에서 복원한다.
 
 import { DurableObject } from 'cloudflare:workers';
-import { CLOSE, MAX_MESSAGE_BYTES, clientMessageSchema, type ServerMessage } from '../shared/protocol.ts';
+import type { ClassRoomSync } from '../shared/classroom.ts';
+import { CLOSE, MAX_MESSAGE_BYTES, clientMessageSchema, type ClientMessage, type ServerMessage } from '../shared/protocol.ts';
 import { PROTOCOL_VERSION } from '../shared/view.ts';
 import {
+  applyClassSync,
   applyCommand,
+  classStartProblems,
   createRoom,
   isSpymasterViewer,
+  isTeacherSession,
   joinRoom,
   maybeTransferHost,
   memberBySession,
   migrateRoom,
   projectRoom,
   recordDedup,
+  roomSummary,
+  TEACHER_ID,
   type RoomEnv,
   type RoomState,
 } from './room-logic.ts';
@@ -27,18 +34,22 @@ interface Attachment {
 }
 
 const STORAGE_KEY = 'room';
-/** 소켓당 초당 명령 수 제한 (토큰 버킷) */
+const TOMBSTONE_KEY = 'tombstone';
 const RATE_CAPACITY = 20;
 const RATE_REFILL_PER_SEC = 6;
+/** 학급 방: 활동이 없어도 이 기간은 클래스에 먼저 묻고 지운다 */
+const CLASS_ROOM_CHECK_MS = 6 * 3600_000;
+const TOMBSTONE_TTL_MS = 3 * 24 * 3600_000;
 
 export type RoomStatus = 'member' | 'notMember' | 'gone' | 'banned';
 
-export class RoomDurableObject extends DurableObject<Env> {
+export class GameRoomDurableObject extends DurableObject<Env> {
   /** undefined = 아직 안 읽음, null = 방 없음 */
   private room: RoomState | null | undefined = undefined;
   private rates = new WeakMap<WebSocket, { tokens: number; at: number }>();
   /** 실패한 명령의 멱등 기록(메모리). 성공한 명령은 상태와 함께 저장된다. */
   private failedCommands = new Map<string, { code: string; message: string }>();
+  private lastReport = '';
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -68,9 +79,20 @@ export class RoomDurableObject extends DurableObject<Env> {
     await this.ctx.storage.put(STORAGE_KEY, next);
     this.room = next;
     const env = this.roomEnv();
-    let at = next.lastActivity + env.ttlHours * 3600_000;
-    if (next.hostOfflineSince !== null) at = Math.min(at, next.hostOfflineSince + env.hostGraceSeconds * 1000 + 1000);
+    let at: number;
+    if (next.classLink) {
+      // 학급 방은 부모 클래스와 수명을 맞춘다: 자체 TTL 로 지우지 않고, 오래 조용하면 클래스에 먼저 묻는다
+      at = next.lastActivity + CLASS_ROOM_CHECK_MS;
+      if (next.classLink.pendingConfirm || next.classLink.pendingRelease) at = Date.now() + 3000;
+    } else {
+      at = next.lastActivity + env.ttlHours * 3600_000;
+      if (next.hostOfflineSince !== null) at = Math.min(at, next.hostOfflineSince + env.hostGraceSeconds * 1000 + 1000);
+    }
     await this.ctx.storage.setAlarm(Math.max(at, Date.now() + 1000));
+  }
+
+  private classStub(classId: string) {
+    return this.env.CLASSES.get(this.env.CLASSES.idFromName(classId));
   }
 
   private sockets(): { ws: WebSocket; att: Attachment }[] {
@@ -102,21 +124,56 @@ export class RoomDurableObject extends DurableObject<Env> {
     this.send(ws, { t: 'state', room: projectRoom(room, memberId, online, this.roomEnv()) });
   }
 
+  /** 이 소켓이 아직 유효한가: 명단의 그 세션이거나, 관전 권한이 있는 교사 세션 */
+  private validSocket(room: RoomState, att: Attachment): boolean {
+    if (att.memberId === TEACHER_ID) return isTeacherSession(room, att.sessionHash);
+    const m = room.members[att.memberId];
+    return !!m && m.sessionHash === att.sessionHash;
+  }
+
   private broadcast(room: RoomState, scope: 'all' | 'spymasters' = 'all') {
     const online = this.online();
     for (const { ws, att } of this.sockets()) {
-      if (!room.members[att.memberId]) continue;
-      // 비공개 채널 변경은 스파이마스터에게만 보낸다. 추측자에게는 전송 시점조차 새지 않게 한다.
+      if (!this.validSocket(room, att)) continue;
+      // 비공개 채널 변경은 스파이마스터에게만 보낸다. 추측자·교사에게는 전송 시점조차 새지 않게 한다.
       if (scope === 'spymasters' && !isSpymasterViewer(room, att.memberId)) continue;
       this.sendState(ws, room, att.memberId, online);
     }
+  }
+
+  private closeSessionSockets(hashes: string[], reason: 'kicked' | 'replaced' | 'closed' | 'removed') {
+    if (!hashes.length) return;
+    for (const s of this.sockets()) {
+      if (!hashes.includes(s.att.sessionHash)) continue;
+      this.send(s.ws, { t: 'bye', reason });
+      try {
+        s.ws.close(reason === 'kicked' ? CLOSE.kicked : reason === 'replaced' ? CLOSE.replaced : reason === 'removed' ? CLOSE.removed : CLOSE.gone, reason);
+      } catch {
+        /* 무시 */
+      }
+    }
+  }
+
+  /** 학급 방: 공개 진행 요약을 클래스에 알린다 (바뀐 경우에만, 실패해도 게임은 계속) */
+  private reportToClass(room: RoomState) {
+    const link = room.classLink;
+    if (!link || link.closed) return;
+    const rep = { roomId: room.roomId, syncVersion: link.syncVersion, ...roomSummary(room, this.online()) };
+    const sig = JSON.stringify(rep);
+    if (sig === this.lastReport) return;
+    this.lastReport = sig;
+    this.classStub(link.classId)
+      .report(rep)
+      .catch(() => {
+        this.lastReport = ''; // 다음 변화 때 다시 보낸다
+      });
   }
 
   // ------------------------------------------------------------------ RPC (Worker 가 호출)
 
   async create(input: { roomId: string; sessionHash: string; nickname: string }): Promise<{ ok: true; inviteToken: string } | { ok: false }> {
     const existing = await this.load();
-    if (existing) return { ok: false };
+    if (existing || (await this.ctx.storage.get(TOMBSTONE_KEY))) return { ok: false };
     const room = createRoom(input.roomId, input.sessionHash, input.nickname, this.roomEnv());
     await this.persist(room);
     return { ok: true, inviteToken: room.inviteToken };
@@ -126,7 +183,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     const room = await this.load();
     if (!room) return { ok: false, code: 'gone' };
     const next = structuredClone(room);
-    const inviteOk = !!input.inviteToken && safeEqual(input.inviteToken, next.inviteToken);
+    const inviteOk = !!input.inviteToken && !!next.inviteToken && safeEqual(input.inviteToken, next.inviteToken);
     const res = joinRoom(next, input.sessionHash, inviteOk, input.nickname, this.roomEnv());
     if (!res.ok) return { ok: false, code: res.code };
     if (res.created) {
@@ -138,9 +195,56 @@ export class RoomDurableObject extends DurableObject<Env> {
 
   async status(sessionHash: string): Promise<RoomStatus> {
     const room = await this.load();
-    if (!room) return 'gone';
+    if (!room || room.classLink?.closed) return 'gone';
     if (room.banned.includes(sessionHash)) return 'banned';
+    if (isTeacherSession(room, sessionHash)) return 'member'; // 교사는 공개 관전만 한다
     return memberBySession(room, sessionHash) ? 'member' : 'notMember';
+  }
+
+  // ------------------------------------------------------------------ 클래스가 부르는 RPC (내부 전용)
+
+  /** 클래스 명단 반영. 버전으로 멱등 처리하고, 닫힌 방은 묘비만 남긴다. */
+  async classSync(p: ClassRoomSync): Promise<{ ok: boolean; version: number }> {
+    if (await this.ctx.storage.get(TOMBSTONE_KEY)) return { ok: true, version: p.syncVersion };
+    const room = await this.load();
+    const out = applyClassSync(room ? structuredClone(room) : null, p, this.roomEnv());
+    if (out.result === 'mismatch') return { ok: false, version: 0 };
+    if (out.result === 'stale' || out.result === 'ignored' || !out.room) return { ok: true, version: p.syncVersion };
+    await this.persist(out.room);
+    for (const reason of ['removed', 'replaced'] as const) {
+      this.closeSessionSockets(
+        out.closeSessions.filter((x) => x.reason === reason).map((x) => x.sessionHash),
+        reason,
+      );
+    }
+    if (out.closedNow) {
+      this.broadcast(out.room); // 중단된 결과를 한 번 보여 주고
+      this.closeSessionSockets(this.sockets().map((s) => s.att.sessionHash), 'closed');
+      return { ok: true, version: p.syncVersion };
+    }
+    this.broadcast(out.room);
+    this.reportToClass(out.room);
+    return { ok: true, version: p.syncVersion };
+  }
+
+  /** 클래스의 잠금 복구용: 이 방에 진행 중(또는 끝난) 게임이 있는가 */
+  async statusForClass(): Promise<{ gameId: string | null; phase: 'lobby' | 'playing' | 'finished' | 'gone' }> {
+    const room = await this.load();
+    if (!room) return { gameId: null, phase: 'gone' };
+    if (!room.game) return { gameId: null, phase: 'lobby' };
+    return { gameId: room.game.gameId, phase: room.game.phase === 'finished' ? 'finished' : 'playing' };
+  }
+
+  /** 수업 종료·방 폐쇄 뒤 정리. 다시 만들어지지 않게 짧은 묘비를 남기고 나머지는 지운다. */
+  async purgeForClass(classId: string): Promise<{ ok: boolean }> {
+    const room = await this.load();
+    if (room && room.classLink?.classId !== classId) return { ok: false };
+    this.closeSessionSockets(this.sockets().map((s) => s.att.sessionHash), 'closed');
+    await this.ctx.storage.deleteAll();
+    await this.ctx.storage.put(TOMBSTONE_KEY, { classId, at: Date.now() });
+    await this.ctx.storage.setAlarm(Date.now() + TOMBSTONE_TTL_MS);
+    this.room = null;
+    return { ok: true };
   }
 
   // ------------------------------------------------------------------ WebSocket
@@ -149,21 +253,23 @@ export class RoomDurableObject extends DurableObject<Env> {
     if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') return new Response('WebSocket 전용', { status: 426 });
     const sessionHash = request.headers.get('X-Session-Hash') ?? '';
     const room = await this.load();
-    if (!room) return new Response('gone', { status: 404 });
+    if (!room || room.classLink?.closed) return new Response('gone', { status: 404 });
     if (room.banned.includes(sessionHash)) return new Response('banned', { status: 403 });
     const member = memberBySession(room, sessionHash);
-    if (!member) return new Response('not a member', { status: 403 });
+    const teacher = !member && isTeacherSession(room, sessionHash);
+    if (!member && !teacher) return new Response('not a member', { status: 403 });
 
     const pair = new WebSocketPair();
     const [client, server] = [pair[0], pair[1]];
     this.ctx.acceptWebSocket(server);
-    server.serializeAttachment({ memberId: member.id, sessionHash } satisfies Attachment);
+    server.serializeAttachment({ memberId: member ? member.id : TEACHER_ID, sessionHash } satisfies Attachment);
 
     const next = structuredClone(room);
     next.lastActivity = Date.now();
-    maybeTransferHost(next, this.online(), this.roomEnv());
+    if (!next.classLink) maybeTransferHost(next, this.online(), this.roomEnv());
     await this.persist(next);
     this.broadcast(next);
+    this.reportToClass(next);
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -203,13 +309,12 @@ export class RoomDurableObject extends DurableObject<Env> {
     const msg = parsed.data;
     const att = ws.deserializeAttachment() as Attachment | null;
     const room = await this.load();
-    if (!room) {
+    if (!room || room.classLink?.closed) {
       this.send(ws, { t: 'bye', reason: 'closed' });
       ws.close(CLOSE.gone, 'gone');
       return;
     }
-    const me = att ? room.members[att.memberId] : undefined;
-    if (!att || !me || me.sessionHash !== att.sessionHash) {
+    if (!att || !this.validSocket(room, att)) {
       this.send(ws, { t: 'bye', reason: 'kicked' });
       ws.close(CLOSE.kicked, 'not a member');
       return;
@@ -221,10 +326,18 @@ export class RoomDurableObject extends DurableObject<Env> {
         ws.close(CLOSE.protocol, 'protocol mismatch');
         return;
       }
-      this.send(ws, { t: 'hello', protocol: PROTOCOL_VERSION, memberId: me.id, serverNow: Date.now() });
-      this.sendState(ws, room, me.id);
+      this.send(ws, { t: 'hello', protocol: PROTOCOL_VERSION, memberId: att.memberId, serverNow: Date.now() });
+      this.sendState(ws, room, att.memberId);
       return;
     }
+
+    if (att.memberId === TEACHER_ID) {
+      // 교사의 관전은 공개 정보만 본다. 게임 행동·채팅은 보낼 수 없다.
+      this.send(ws, { t: 'ack', commandId: msg.commandId, ok: false, code: 'forbidden', message: '관전 중인 선생님은 게임 행동을 할 수 없습니다.' });
+      return;
+    }
+    const me = room.members[att.memberId];
+    if (!me) return;
 
     // ---- 명령: 멱등 처리 → 적용 → 저장 → 응답 → 전송
     const dedupKey = `${me.id}:${msg.commandId}`;
@@ -238,6 +351,11 @@ export class RoomDurableObject extends DurableObject<Env> {
     if (priorFail) {
       this.send(ws, { t: 'ack', commandId: msg.commandId, ok: false, ...priorFail });
       this.sendState(ws, room, me.id);
+      return;
+    }
+
+    if (room.classLink && msg.cmd.type === 'startGame') {
+      await this.startClassGame(ws, me.id, msg);
       return;
     }
 
@@ -288,6 +406,89 @@ export class RoomDurableObject extends DurableObject<Env> {
       }
     }
     this.broadcast(next, res.scope);
+    if (next.classLink) {
+      if (next.classLink.pendingRelease) await this.releaseToClass();
+      this.reportToClass(this.room ?? next);
+    }
+  }
+
+  /**
+   * 학급 방의 게임 시작: 클래스가 이 명단 버전을 잠근 뒤에만 시작한다.
+   * 잠금 → 게임 생성·저장 → 클래스에 확정. 저장이 실패하면 잠금을 푼다.
+   * blockConcurrencyWhile 로 이 사이에 다른 명령·명단 반영이 끼어들지 못하게 한다.
+   */
+  private async startClassGame(ws: WebSocket, memberId: string, msg: Extract<ClientMessage, { t: 'cmd' }>) {
+    await this.ctx.blockConcurrencyWhile(async () => {
+      const room = await this.load();
+      const link = room?.classLink;
+      const me = room?.members[memberId];
+      const fail = (code: string, message: string) => this.send(ws, { t: 'ack', commandId: msg.commandId, ok: false, code, message });
+      if (!room || !link || !me) return fail('gone', '방이 없습니다.');
+      if (room.hostId !== me.id) return fail('forbidden', '방장만 시작할 수 있습니다.');
+      if (room.game) return fail('locked', '이미 게임이 진행 중입니다.');
+      const problems = classStartProblems(room, this.online());
+      if (problems.length) return fail('notReady', problems.join(' '));
+
+      let lock;
+      try {
+        lock = await this.classStub(link.classId).lockForStart({ roomId: room.roomId, version: link.syncVersion, opId: msg.commandId });
+      } catch {
+        return fail('classUnavailable', '클래스 서버에 연결하지 못했습니다. 잠시 뒤 다시 시도하세요.');
+      }
+      if (!lock.ok) return fail(lock.code, lock.message);
+
+      const env = this.roomEnv();
+      const next = structuredClone(room);
+      const meNext = next.members[me.id] as NonNullable<typeof me>;
+      const res = applyCommand(next, meNext, msg, env, this.online(), { classStartApproved: true });
+      if (!res.ok || !next.game || !next.classLink) {
+        await this.classStub(link.classId).cancelStart({ roomId: room.roomId, opId: msg.commandId }).catch(() => {});
+        return fail(res.ok ? 'error' : res.code, res.ok ? '시작하지 못했습니다.' : res.message);
+      }
+      recordDedup(next, { id: msg.commandId, memberId: me.id, ok: true });
+      next.classLink.pendingConfirm = { opId: msg.commandId, gameId: next.game.gameId };
+      try {
+        await this.persist(next);
+      } catch {
+        this.room = undefined;
+        await this.classStub(link.classId).cancelStart({ roomId: room.roomId, opId: msg.commandId }).catch(() => {});
+        return fail('storageFailed', '저장에 실패했습니다. 다시 시도하세요.');
+      }
+      this.send(ws, { t: 'ack', commandId: msg.commandId, ok: true });
+      this.broadcast(next);
+      await this.confirmToClass();
+      this.reportToClass(this.room ?? next);
+    });
+  }
+
+  private async confirmToClass() {
+    const room = await this.load();
+    const link = room?.classLink;
+    if (!room || !link?.pendingConfirm) return;
+    try {
+      const r = await this.classStub(link.classId).confirmStart({ roomId: room.roomId, ...link.pendingConfirm });
+      if (!r.ok) return;
+    } catch {
+      return; // alarm 에서 다시
+    }
+    const next = structuredClone(room);
+    if (next.classLink) next.classLink.pendingConfirm = null;
+    await this.persist(next);
+  }
+
+  private async releaseToClass() {
+    const room = await this.load();
+    const link = room?.classLink;
+    if (!room || !link?.pendingRelease) return;
+    try {
+      const r = await this.classStub(link.classId).releaseRoster({ roomId: room.roomId, gameId: link.pendingRelease });
+      if (!r.ok) return;
+    } catch {
+      return; // alarm 에서 다시
+    }
+    const next = structuredClone(room);
+    if (next.classLink) next.classLink.pendingRelease = null;
+    await this.persist(next);
   }
 
   override async webSocketClose(ws: WebSocket): Promise<void> {
@@ -308,25 +509,68 @@ export class RoomDurableObject extends DurableObject<Env> {
     if (!room) return;
     const online = new Set(this.sockets().filter((s) => s.ws !== closing).map((s) => s.att.memberId));
     const next = structuredClone(room);
-    if (maybeTransferHost(next, online, this.roomEnv())) {
+    if (!next.classLink && maybeTransferHost(next, online, this.roomEnv())) {
       await this.persist(next);
     }
     // 접속 표시가 바뀌었으므로 남은 참가자에게 알린다(revision 은 그대로).
     for (const { ws, att } of this.sockets()) {
-      if (ws === closing || !next.members[att.memberId]) continue;
+      if (ws === closing || !this.validSocket(next, att)) continue;
       this.send(ws, { t: 'state', room: projectRoom(next, att.memberId, online, this.roomEnv()) });
+    }
+    if (next.classLink && !next.classLink.closed) {
+      const rep = { roomId: next.roomId, syncVersion: next.classLink.syncVersion, ...roomSummary(next, online) };
+      const sig = JSON.stringify(rep);
+      if (sig !== this.lastReport) {
+        this.lastReport = sig;
+        this.classStub(next.classLink.classId)
+          .report(rep)
+          .catch(() => {
+            this.lastReport = '';
+          });
+      }
     }
   }
 
   // ------------------------------------------------------------------ 정리 (보존 정책, 카드 규칙 아님)
 
   override async alarm(): Promise<void> {
+    const tomb = await this.ctx.storage.get<{ at: number }>(TOMBSTONE_KEY);
+    if (tomb) {
+      if (Date.now() - tomb.at >= TOMBSTONE_TTL_MS) await this.ctx.storage.deleteAll();
+      else await this.ctx.storage.setAlarm(tomb.at + TOMBSTONE_TTL_MS);
+      return;
+    }
     const room = await this.load();
     if (!room) {
       await this.ctx.storage.deleteAll();
       return;
     }
     const env = this.roomEnv();
+
+    if (room.classLink) {
+      // 밀린 클래스 알림을 다시 보낸다
+      if (room.classLink.pendingConfirm) await this.confirmToClass();
+      if ((await this.load())?.classLink?.pendingRelease) await this.releaseToClass();
+      const cur = (await this.load()) as RoomState;
+      if (env.now - cur.lastActivity >= CLASS_ROOM_CHECK_MS) {
+        // 부모 클래스가 이 방을 여전히 쓰는지 묻는다. 수업 중이면 지우지 않는다.
+        // 물어보지 못하면(오류) 지우지 않는다
+        const alive = await this.classStub(cur.classLink!.classId)
+          .roomAlive(cur.roomId)
+          .catch(() => true);
+        if (!alive) {
+          await this.purgeForClass(cur.classLink!.classId);
+          return;
+        }
+        const next = structuredClone(cur);
+        next.lastActivity = env.now;
+        await this.persist(next);
+        return;
+      }
+      await this.persist(cur); // 다음 확인 예약
+      return;
+    }
+
     if (env.now - room.lastActivity >= env.ttlHours * 3600_000) {
       await this.destroy('expired');
       return;
@@ -340,7 +584,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     }
   }
 
-  /** 방을 없앤다: 소켓 종료 + 저장 데이터·초대 정보 삭제 */
+  /** 독립 방을 없앤다: 소켓 종료 + 저장 데이터·초대 정보 삭제 */
   private async destroy(reason: 'closed' | 'expired') {
     for (const { ws } of this.sockets()) {
       this.send(ws, { t: 'bye', reason });

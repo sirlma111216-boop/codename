@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, ApiError } from './api.ts';
+import { ClassPage } from './screens/Class.tsx';
+import { ClassJoin } from './screens/ClassJoin.tsx';
 import { Home } from './screens/Home.tsx';
 import { Join } from './screens/Join.tsx';
 import { RoomScreen } from './screens/Room.tsx';
@@ -34,7 +36,10 @@ export function App() {
   else if (gate.state === 'password') body = <PasswordGate onOk={() => setGate({ state: 'ready' })} />;
   else {
     const room = path.match(/^\/r\/([A-Za-z0-9_-]{22})$/);
+    const cls = path.match(/^\/c\/([A-Za-z0-9_-]{22})$/);
     if (room) body = <RoomScreen key={room[1]} roomId={room[1] as string} />;
+    else if (cls) body = <ClassPage key={cls[1]} classId={cls[1] as string} />;
+    else if (path === '/c/join') body = <ClassJoin />;
     else if (path === '/join') body = <Join />;
     else if (path === '/rules') body = <RulesPage />;
     else body = <Home />;

@@ -18,7 +18,8 @@ import {
 } from './security.ts';
 import { cleanNickname } from './room-logic.ts';
 
-export { RoomDurableObject } from './room.ts';
+export { GameRoomDurableObject } from './room.ts';
+export { ClassroomDurableObject } from './classroom.ts';
 
 const API_HEADERS = {
   'content-type': 'application/json; charset=utf-8',
@@ -60,6 +61,18 @@ async function context(request: Request, env: Env): Promise<Ctx> {
 }
 
 const roomStub = (env: Env, roomId: string) => env.ROOMS.get(env.ROOMS.idFromName(roomId));
+const classStub = (env: Env, classId: string) => env.CLASSES.get(env.CLASSES.idFromName(classId));
+
+const CLASS_JOIN_ERRORS: Record<string, [number, string]> = {
+  gone: [404, '클래스가 없거나 정리되었습니다.'],
+  ended: [410, '수업이 끝났습니다.'],
+  banned: [403, '이 클래스에서 내보내졌습니다.'],
+  badInvite: [403, '클래스 초대 링크가 올바르지 않거나 새로 바뀌었습니다. 선생님께 새 링크를 받으세요.'],
+  locked: [403, '선생님이 새 입장을 잠갔습니다.'],
+  full: [403, '클래스 정원이 찼습니다.'],
+  badNickname: [400, '닉네임을 입력하세요.'],
+  teacher: [409, '이 브라우저는 이 클래스의 선생님으로 들어와 있습니다.'],
+};
 
 async function handleApi(request: Request, env: Env, url: URL): Promise<Response> {
   const path = url.pathname;
@@ -96,8 +109,57 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
   if (!ctx.sid || !ctx.sessionHash) return fail(401, 'noSession', '세션이 없습니다. 페이지를 새로고침하세요.');
   if (!ctx.admitted) return fail(403, 'needPassword', '입장 암호가 필요합니다.');
 
+  // ---------------------------------------------------------------- 학급(클래스)
+  // 새 클래스: 만든 사람의 익명 세션에 교사 권한. 교사 복구 키는 이번 응답에서 한 번만 보여 주고 서버에는 해시만 둔다.
+  if (path === '/api/classes' && method === 'POST') {
+    const body = await readJson(request);
+    const name = typeof body?.name === 'string' ? body.name : '';
+    const capacity = typeof body?.capacity === 'number' ? body.capacity : 40;
+    const recoveryKey = randomToken(18);
+    const recoveryKeyHash = await sha256Hex(recoveryKey);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const classId = randomToken(16);
+      const res = await classStub(env, classId).createClass({ classId, sessionHash: ctx.sessionHash, recoveryKeyHash, name, capacity });
+      if (res.ok) return json({ ok: true, classId, invite: `${classId}.${res.inviteToken}`, recoveryKey });
+    }
+    return fail(500, 'createFailed', '클래스를 만들지 못했습니다.');
+  }
+
+  const cm = path.match(/^\/api\/classes\/([^/]+)\/(join|status|ws|recover)$/);
+  if (cm) {
+    const classId = cm[1] as string;
+    const action = cm[2];
+    if (!ROOM_ID_RE.test(classId)) return fail(404, 'gone', '클래스를 찾을 수 없습니다.');
+    const stub = classStub(env, classId);
+    if (action === 'join' && method === 'POST') {
+      const body = await readJson(request);
+      const inviteToken = typeof body?.inviteToken === 'string' ? body.inviteToken.slice(0, 64) : '';
+      const nickname = typeof body?.nickname === 'string' ? body.nickname : '';
+      const res = await stub.join({ sessionHash: ctx.sessionHash, inviteToken, nickname });
+      if (res.ok) return json({ ok: true });
+      const [status, message] = CLASS_JOIN_ERRORS[res.code] ?? [400, '입장하지 못했습니다.'];
+      return fail(status, res.code, message);
+    }
+    if (action === 'status' && method === 'GET') return json({ ok: true, status: await stub.status(ctx.sessionHash) });
+    if (action === 'recover' && method === 'POST') {
+      const body = await readJson(request);
+      const key = typeof body?.key === 'string' ? body.key.trim().slice(0, 64) : '';
+      if (!key) return fail(400, 'badKey', '복구 키를 입력하세요.');
+      const res = await stub.recoverTeacher({ sessionHash: ctx.sessionHash, keyHash: await sha256Hex(key) });
+      return res.ok ? json({ ok: true }) : fail(403, 'badKey', '복구 키가 맞지 않거나 수업이 끝났습니다.');
+    }
+    if (action === 'ws' && method === 'GET') {
+      if (!isWs) return fail(426, 'upgradeRequired', 'WebSocket 연결이 필요합니다.');
+      const headers = new Headers(request.headers);
+      headers.set('X-Session-Hash', ctx.sessionHash);
+      return stub.fetch(new Request(request.url, { method: 'GET', headers }));
+    }
+  }
+
+  // ---------------------------------------------------------------- 독립 게임방
   // 새 방
   if (path === '/api/rooms' && method === 'POST') {
+    if (env.ALLOW_STANDALONE_ROOMS === 'false') return fail(403, 'standaloneDisabled', '이 서버에서는 학급 모드로만 게임방을 만들 수 있습니다.');
     const body = await readJson(request);
     const nickname = cleanNickname(typeof body?.nickname === 'string' ? body.nickname : '');
     if (!nickname) return fail(400, 'badNickname', '닉네임을 입력하세요.');
@@ -129,6 +191,7 @@ async function handleApi(request: Request, env: Env, url: URL): Promise<Response
         locked: [403, '방이 잠겨 있어 새로 들어갈 수 없습니다.'],
         full: [403, '방 인원이 가득 찼습니다.'],
         badNickname: [400, '닉네임을 입력하세요.'],
+        classManaged: [403, '학급 방은 클래스 화면에서 참가 신청으로 들어갑니다.'],
       };
       const [status, message] = messages[res.code] ?? [400, '입장하지 못했습니다.'];
       return fail(status, res.code, message);

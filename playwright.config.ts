@@ -15,7 +15,7 @@ export default defineConfig({
   workers: 1,
   reporter: [['list']],
   // 원격에서는 서버 재시작 테스트를 할 수 없다
-  testIgnore: remote ? ['**/restart.spec.ts'] : [],
+  testIgnore: remote ? ['**/restart.spec.ts', '**/class-restart.spec.ts'] : [],
   use: {
     baseURL: remote ?? `http://127.0.0.1:${PORT}`,
     ...devices['Desktop Chrome'],

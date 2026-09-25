@@ -20,9 +20,11 @@
     "release:check": "node --experimental-strip-types --no-warnings scripts/release-check.ts",
     "deploy": "npm run build && wrangler deploy",
     "deploy:staging": "npm run build && wrangler deploy --env staging",
-    "cf-typegen": "wrangler types src/server/worker-configuration.d.ts"
+    "cf-typegen": "wrangler types src/server/worker-configuration.d.ts",
+    "test:class-sim": "node --experimental-strip-types --no-warnings tests/load/class-sim.ts"
   },
   "dependencies": {
+    "qrcode-generator": "2.0.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zod": "4.6.5"
@@ -34,6 +36,7 @@
     "@types/node": "24.13.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "@types/ws": "8.18.1",
     "@vitejs/plugin-react": "6.1.1",
     "concurrently": "10.0.5",
     "eslint": "10.11.0",
@@ -44,6 +47,7 @@
     "typescript-eslint": "8.70.1",
     "vite": "8.3.1",
     "vitest": "5.0.1",
-    "wrangler": "4.138.0"
+    "wrangler": "4.138.0",
+    "ws": "8.21.3"
   }
 }

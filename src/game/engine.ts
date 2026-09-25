@@ -28,7 +28,7 @@ export type GameAction =
   | { type: 'spyQuery'; draft: string }
   | { type: 'spyQueryAnswer'; queryId: number; answer: 'allow' | 'disallow' }
   | { type: 'replaceSpymaster'; team: Team; newMemberId: string }
-  | { type: 'abort' };
+  | { type: 'abort'; reason?: 'host' | 'classEnded' };
 
 export type EngineErrorCode =
   | 'notYourTurn'
@@ -320,7 +320,7 @@ export function applyAction(prev: GameState, actorId: string, action: GameAction
     }
 
     case 'abort': {
-      finish(s, null, 'aborted', now);
+      finish(s, null, action.reason === 'classEnded' ? 'classEnded' : 'aborted', now);
       break;
     }
 
