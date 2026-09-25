@@ -20,6 +20,7 @@ import {
   cancelStart,
   classStatus,
   confirmStart,
+  deferLockCheck,
   createClass,
   endClassInState,
   isTeacher,
@@ -298,7 +299,9 @@ export class ClassroomDurableObject extends DurableObject<Env> {
         let ok = false;
         try {
           const res = await this.roomStub(roomId).classSync(payload);
-          ok = res.ok;
+          // 다른 클래스의 방: 다시 보내도 받아들여지지 않으므로 재시도를 멈춘다
+          if (res.mismatch) console.error('room belongs to another class', roomId.slice(0, 6));
+          ok = res.ok || !!res.mismatch;
         } catch {
           ok = false;
         }
@@ -488,6 +491,10 @@ export class ClassroomDurableObject extends DurableObject<Env> {
       try {
         st = await this.roomStub(roomId).statusForClass();
       } catch {
+        // 묻지 못했다: 같은 방을 곧바로 다시 묻지 않게 다음 확인을 늦춘다
+        const cur = (await this.load()) as ClassState;
+        const next = structuredClone(cur);
+        if (deferLockCheck(next, roomId, Date.now())) await this.persist(next);
         continue;
       }
       const cur = (await this.load()) as ClassState;
@@ -501,16 +508,23 @@ export class ClassroomDurableObject extends DurableObject<Env> {
     // 4) 닫힌 방 정리 (실패하면 다음 alarm 에서 이어 간다)
     const cur = (await this.load()) as ClassState;
     const remaining: string[] = [];
-    for (const roomId of cur.cleanup) {
-      try {
-        const res = await this.roomStub(roomId).purgeForClass(cur.classId);
-        if (!res.ok) remaining.push(roomId);
-      } catch {
-        remaining.push(roomId);
+    const tryCleanup = cur.cleanup.length > 0 && now >= cur.cleanupRetryAt;
+    if (tryCleanup) {
+      for (const roomId of cur.cleanup) {
+        try {
+          const res = await this.roomStub(roomId).purgeForClass(cur.classId);
+          // ok:false = 다른 클래스의 방. 다시 해도 같으므로 목록에서 뺀다
+          if (!res.ok) console.error('cleanup skipped: room belongs to another class', roomId.slice(0, 6));
+        } catch {
+          remaining.push(roomId);
+        }
       }
     }
     const after = structuredClone((await this.load()) as ClassState);
-    after.cleanup = after.cleanup.filter((id) => remaining.includes(id) || !cur.cleanup.includes(id));
+    if (tryCleanup) {
+      after.cleanup = after.cleanup.filter((id) => remaining.includes(id) || !cur.cleanup.includes(id));
+      after.cleanupRetryAt = remaining.length ? now + 60_000 : 0;
+    }
     // 정리가 끝난 수업은 보존 기간 뒤 저장소까지 비운다
     if (after.ended && after.cleanup.length === 0 && now - after.lastActivity >= env.ttlHours * 3600_000) {
       for (const s of this.sockets()) {

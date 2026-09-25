@@ -24,6 +24,7 @@ import {
   recordDedup,
   roomSummary,
   TEACHER_ID,
+  classRetryDelayMs,
   type Member,
   type RoomEnv,
   type RoomState,
@@ -113,7 +114,7 @@ export class GameRoomDurableObject extends DurableObject<Env> {
     if (next.classLink) {
       // 학급 방은 부모 클래스와 수명을 맞춘다: 자체 TTL 로 지우지 않고, 오래 조용하면 클래스에 먼저 묻는다
       at = next.lastActivity + CLASS_ROOM_CHECK_MS;
-      if (next.classLink.pendingConfirm || next.classLink.pendingRelease) at = Date.now() + 3000;
+      if (next.classLink.pendingConfirm || next.classLink.pendingRelease) at = next.classLink.retryAt ?? Date.now() + 3000;
     } else {
       at = next.lastActivity + env.ttlHours * 3600_000;
       if (next.hostOfflineSince !== null) at = Math.min(at, next.hostOfflineSince + env.hostGraceSeconds * 1000 + 1000);
@@ -252,11 +253,11 @@ export class GameRoomDurableObject extends DurableObject<Env> {
   // ------------------------------------------------------------------ 클래스가 부르는 RPC (내부 전용)
 
   /** 클래스 명단 반영. 버전으로 멱등 처리하고, 닫힌 방은 묘비만 남긴다. */
-  async classSync(p: ClassRoomSync): Promise<{ ok: boolean; version: number }> {
+  async classSync(p: ClassRoomSync): Promise<{ ok: boolean; version: number; mismatch?: boolean }> {
     if (await this.ctx.storage.get(TOMBSTONE_KEY)) return { ok: true, version: p.syncVersion };
     const room = await this.load();
     const out = applyClassSync(room ? structuredClone(room) : null, p, this.roomEnv());
-    if (out.result === 'mismatch') return { ok: false, version: 0 };
+    if (out.result === 'mismatch') return { ok: false, version: 0, mismatch: true };
     if (out.result === 'stale' || out.result === 'ignored' || !out.room) return { ok: true, version: p.syncVersion };
     await this.persist(out.room);
     for (const reason of ['removed', 'replaced'] as const) {
@@ -511,34 +512,46 @@ export class GameRoomDurableObject extends DurableObject<Env> {
     });
   }
 
+  /**
+   * 클래스 알림(게임 확정·명단 잠금 해제)의 결과 처리.
+   *  - 클래스가 답했으면(받아들였든 거절했든) 끝낸다. 거절은 다시 보내도 바뀌지 않는다 — 클래스가 기준이고,
+   *    어긋난 잠금은 클래스가 방 상태를 직접 물어 맞춘다(reconcileLock).
+   *  - 연결 오류만 다시 시도하되 간격을 점점 늘린다 (3초 → … → 최대 5분).
+   */
+  private async settleClassNotice(room: RoomState, kind: 'pendingConfirm' | 'pendingRelease', call: () => Promise<{ ok: boolean }>) {
+    // null = 연결 오류(클래스가 답하지 못함)
+    const answered: { ok: boolean } | null = await call().catch(() => null);
+    const next = structuredClone(room);
+    const l = next.classLink;
+    if (!l) return;
+    if (answered) {
+      if (!answered.ok) console.error('class declined room notice', kind);
+      l[kind] = null;
+      if (!l.pendingConfirm && !l.pendingRelease) {
+        l.retryAttempts = 0;
+        l.retryAt = null;
+      }
+    } else {
+      l.retryAttempts = (l.retryAttempts ?? 0) + 1;
+      l.retryAt = Date.now() + classRetryDelayMs(l.retryAttempts);
+    }
+    await this.persist(next);
+  }
+
   private async confirmToClass() {
     const room = await this.load();
     const link = room?.classLink;
     if (!room || !link?.pendingConfirm) return;
-    try {
-      const r = await this.classStub(link.classId).confirmStart({ roomId: room.roomId, ...link.pendingConfirm });
-      if (!r.ok) return;
-    } catch {
-      return; // alarm 에서 다시
-    }
-    const next = structuredClone(room);
-    if (next.classLink) next.classLink.pendingConfirm = null;
-    await this.persist(next);
+    const p = link.pendingConfirm;
+    await this.settleClassNotice(room, 'pendingConfirm', () => this.classStub(link.classId).confirmStart({ roomId: room.roomId, ...p }));
   }
 
   private async releaseToClass() {
     const room = await this.load();
     const link = room?.classLink;
     if (!room || !link?.pendingRelease) return;
-    try {
-      const r = await this.classStub(link.classId).releaseRoster({ roomId: room.roomId, gameId: link.pendingRelease });
-      if (!r.ok) return;
-    } catch {
-      return; // alarm 에서 다시
-    }
-    const next = structuredClone(room);
-    if (next.classLink) next.classLink.pendingRelease = null;
-    await this.persist(next);
+    const gameId = link.pendingRelease;
+    await this.settleClassNotice(room, 'pendingRelease', () => this.classStub(link.classId).releaseRoster({ roomId: room.roomId, gameId }));
   }
 
   override async webSocketClose(ws: WebSocket): Promise<void> {
@@ -603,8 +616,9 @@ export class GameRoomDurableObject extends DurableObject<Env> {
 
     if (room.classLink) {
       // 밀린 클래스 알림을 다시 보낸다
-      if (room.classLink.pendingConfirm) await this.confirmToClass();
-      if ((await this.load())?.classLink?.pendingRelease) await this.releaseToClass();
+      const due = (room.classLink.retryAt ?? 0) <= Date.now();
+      if (due && room.classLink.pendingConfirm) await this.confirmToClass();
+      if (due && (await this.load())?.classLink?.pendingRelease) await this.releaseToClass();
       const cur = (await this.load()) as RoomState;
       if (env.now - cur.lastActivity >= CLASS_ROOM_CHECK_MS) {
         // 부모 클래스가 이 방을 여전히 쓰는지 묻는다. 수업 중이면 지우지 않는다.

@@ -69,6 +69,17 @@ export interface ClassLink {
   pendingConfirm: { opId: string; gameId: string } | null;
   /** 게임 뒤 대기실로 돌아왔고 클래스에 명단 잠금 해제를 아직 못 알린 경우 */
   pendingRelease: string | null;
+  /** 위 알림이 연결 오류로 실패한 횟수와 다음 시도 시각 (점점 늦춘다) */
+  retryAttempts?: number;
+  retryAt?: number | null;
+}
+
+/**
+ * 클래스 알림 재시도 간격: 3초에서 시작해 두 배씩, 최대 5분.
+ * 고정 간격으로 끝없이 재시도하면 Cloudflare 요청 한도를 태운다 (alarm 1건 + RPC 1건씩).
+ */
+export function classRetryDelayMs(attempts: number): number {
+  return Math.min(300_000, 3000 * 2 ** Math.max(0, Math.min(attempts - 1, 7)));
 }
 
 /** 관전하는 교사의 소켓 표시 */

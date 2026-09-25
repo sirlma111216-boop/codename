@@ -49,7 +49,8 @@ export interface ClassRoom {
   syncAttempts: number;
   nextSyncAt: number;
   createdAt: number;
-  lock: { version: number; opId: string; at: number; gameId: string | null } | null;
+  /** checkAt·checks: 확인이 없는 잠금을 방에 물어볼 다음 시각과 실패 횟수 (점점 늦춘다) */
+  lock: { version: number; opId: string; at: number; gameId: string | null; checkAt?: number; checks?: number } | null;
   report: { readyCount: number; onlineCount: number; summary: RoomSummary | null; at: number } | null;
   closeReason: 'teacher' | 'host' | 'classEnded' | null;
 }
@@ -75,6 +76,8 @@ export interface ClassState {
   ops: { id: string; actor: string; ok: boolean; code?: string; message?: string; roomId?: string }[];
   /** 수업 종료·만료 뒤 지워야 할 게임방 (재시도 목록) */
   cleanup: string[];
+  /** 정리가 실패했을 때 다음 시도 시각 */
+  cleanupRetryAt: number;
   bots: Record<string, ClassBot>;
 }
 
@@ -113,6 +116,7 @@ export function createClass(classId: string, teacherHash: string, recoveryKeyHas
     helpRequests: [],
     ops: [],
     cleanup: [],
+    cleanupRetryAt: 0,
     bots: {},
   };
 }
@@ -147,6 +151,7 @@ export function migrateClass(raw: unknown): ClassState | null {
     helpRequests: c.helpRequests ?? [],
     ops: c.ops ?? [],
     cleanup: c.cleanup ?? [],
+    cleanupRetryAt: c.cleanupRetryAt ?? 0,
     bots: c.bots ?? {},
   };
 }
@@ -702,7 +707,8 @@ export function markSyncFailed(c: ClassState, roomId: string, now: number) {
   const r = c.rooms[roomId];
   if (!r) return;
   r.syncAttempts++;
-  r.nextSyncAt = now + Math.min(30_000, 1000 * 2 ** Math.min(r.syncAttempts, 5));
+  // 2초에서 시작해 두 배씩, 최대 5분. 끝없는 짧은 재시도는 요청 한도를 태운다.
+  r.nextSyncAt = now + Math.min(300_000, 1000 * 2 ** Math.min(r.syncAttempts, 9));
 }
 
 export type LockResult = { ok: true } | { ok: false; code: string; message: string };
@@ -786,8 +792,17 @@ export function applyReport(c: ClassState, rep: RoomReport, now: number): { chan
 /** 잠금 뒤 확인이 오지 않은 방 (방 상태를 직접 물어야 한다) */
 export function unconfirmedLocks(c: ClassState, now: number): string[] {
   return Object.values(c.rooms)
-    .filter((r) => r.lock && !r.lock.gameId && now - r.lock.at > LOCK_CONFIRM_TIMEOUT_MS)
+    .filter((r) => r.lock && !r.lock.gameId && now >= (r.lock.checkAt ?? r.lock.at + LOCK_CONFIRM_TIMEOUT_MS))
     .map((r) => r.id);
+}
+
+/** 방에 상태를 묻지 못했다: 다음 확인을 늦춘다 (20초 → 40초 → … → 최대 5분) */
+export function deferLockCheck(c: ClassState, roomId: string, now: number): boolean {
+  const lock = c.rooms[roomId]?.lock;
+  if (!lock) return false;
+  lock.checks = (lock.checks ?? 0) + 1;
+  lock.checkAt = now + Math.min(300_000, LOCK_CONFIRM_TIMEOUT_MS * 2 ** Math.min(lock.checks - 1, 4));
+  return true;
 }
 
 /** 방이 알려 준 실제 상태로 잠금을 맞춘다 */
@@ -815,10 +830,10 @@ export function nextWakeAt(c: ClassState, now: number, ttlMs: number): number {
   let t = c.lastActivity + ttlMs;
   for (const r of Object.values(c.rooms)) {
     if (r.syncedVersion < r.syncVersion) t = Math.min(t, Math.max(now + 500, r.nextSyncAt || now + 2000));
-    if (r.lock && !r.lock.gameId) t = Math.min(t, r.lock.at + LOCK_CONFIRM_TIMEOUT_MS + 500);
+    if (r.lock && !r.lock.gameId) t = Math.min(t, (r.lock.checkAt ?? r.lock.at + LOCK_CONFIRM_TIMEOUT_MS) + 500);
   }
-  if (c.cleanup.length) t = Math.min(t, now + 3000);
-  return Math.max(t, now + 500);
+  if (c.cleanup.length) t = Math.min(t, Math.max(now + 3000, c.cleanupRetryAt));
+  return Math.max(t, now + 1000);
 }
 
 // ------------------------------------------------------------------ 화면용 projection
