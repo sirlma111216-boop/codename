@@ -127,6 +127,12 @@ Workers Free 플랜에서도 SQLite 저장소를 쓰는 Durable Object 를 쓸 �
 
 **무료 운영을 보장하지 않습니다.** 한도와 요금은 바뀔 수 있으니 [Durable Objects 요금](https://developers.cloudflare.com/durable-objects/platform/pricing/)을 확인하세요.
 
+**실제로 한도를 넘은 적이 있습니다 (2026-09-25).** 운영 주소에서 학급 부하 시뮬레이션(`test:class-sim`, 학생 봇 60명)과 브라우저 테스트를 여러 번 돌리자 그날의 Durable Object 요청 한도를 모두 써서, 다음 날 한국 시간 09:00(UTC 자정)에 한도가 다시 채워질 때까지 방·클래스·혼자서 플레이 만들기가 `serverError` 로 실패했습니다. 이때 `npx wrangler tail` 오류 기록에는 `Exceeded allowed volume of requests in Durable Objects free tier` 가 남습니다. 이전 버전으로 롤백해도 풀리지 않습니다.
+
+- 운영 주소에서는 부하 시뮬레이션을 돌리지 마세요. staging 도 같은 계정 한도를 나눠 씁니다.
+- 봇의 행동 하나(힌트·추측·채팅)도 Durable Object 요청 1건(alarm)입니다. 봇만 있는 4인 게임 한 판은 대략 50~100건입니다.
+- 수업에 안정적으로 쓰려면 Workers Paid 플랜을 검토하세요(유료 플랜은 한도를 넘으면 멈추는 대신 사용량만큼 과금됩니다).
+
 ## 저장소 공개 범위
 
 지시서의 기본은 **비공개 저장소**입니다. 비공개 저장소라고 웹사이트 접근이 막히는 것은 아니며, 앱 접근은 초대 토큰(과 선택적 공용 입장 암호)으로 제어합니다. 한국어 정식판 단어·키 카드 같은 출판사 자료를 넣게 되면, 그 전에 저장소를 비공개로 바꾸세요.

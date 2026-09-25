@@ -238,8 +238,11 @@ export default {
     if (url.pathname.startsWith('/api/')) {
       try {
         return await handleApi(request, env, url);
-      } catch {
-        console.error('api error', url.pathname.replace(/\/api\/rooms\/[^/]+/, '/api/rooms/:id'));
+      } catch (e) {
+        // 경로의 방·클래스 id 는 지우고, 원인 파악에 필요한 오류 이름·메시지만 남긴다 (세션·쿠키는 남기지 않는다)
+        const where = url.pathname.replace(/\/api\/(rooms|classes)\/[^/]+/, '/api/$1/:id');
+        const why = e instanceof Error ? `${e.name}: ${e.message}`.slice(0, 300) : String(e).slice(0, 300);
+        console.error('api error', where, why);
         return fail(500, 'serverError', '서버 오류가 발생했습니다.');
       }
     }

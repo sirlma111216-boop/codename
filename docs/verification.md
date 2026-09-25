@@ -43,6 +43,8 @@
 
 봇끼리 측정값과 한계: [bots.md](bots.md).
 
+**production 검증 미완료 (2026-09-25).** 봇 기능을 배포한 뒤 production 에서 브라우저 테스트를 돌렸으나, 그날 앞서 돌린 학급 부하 시뮬레이션·테스트로 Cloudflare 무료 플랜의 하루 Durable Object 요청 한도가 이미 소진되어 모든 방·클래스 요청이 실패했다(`Exceeded allowed volume of requests in Durable Objects free tier`). 앱 오류가 아니라 사용량 한도이며, 롤백해도 같았다. 봇 기능의 production 검증은 한도가 다시 채워진 뒤(UTC 자정 = 한국 시간 09:00) 다시 해야 한다. 로컬 Workers 런타임에서는 위 검사를 모두 통과했다.
+
 ## 실행하지 않은 것 / 한계
 
 - **staging 환경은 배포하지 않았다.** 대신 production 에서 직접 WebSocket·새로고침·초대 링크 입장을 검증했다. staging 은 `npm run deploy:staging` 으로 만들 수 있다(별도 Worker·별도 Durable Object 저장소).
