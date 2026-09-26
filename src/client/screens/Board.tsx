@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import type { CardView, GameView } from '../../shared/view.ts';
 import { COLS, coord, IDENTITY_MARK, IDENTITY_NAME, IDENTITY_SHORT } from '../labels.ts';
 import { COVER_SIZES, coverImageName, fallbackColor, imageSrcSet, imageUrl, type AssetManifest } from '../theme.ts';
@@ -13,6 +13,29 @@ export interface BoardProps {
   onSelect: (index: number) => void;
   onActivate?: (index: number) => void;
   large?: boolean;
+}
+
+/**
+ * 카드 단어가 카드 안에 들어가도록 줄인다.
+ * 글자 크기는 카드 폭 기준(cqi)으로 정하지만, 휴대폰 브라우저의 글자 크기 설정(카카오톡 인앱 ‘가가’, 사파리 텍스트 크기 등)이
+ * 글자를 더 키우면 3~4글자 단어가 두 줄로 쪼개지고 카드 밖으로 넘친다. 그릴 때마다 실제 크기를 재서 넘치면 줄인다.
+ */
+function fitWords(root: HTMLElement | null) {
+  if (!root) return;
+  for (const el of root.querySelectorAll<HTMLElement>('.card-word')) {
+    el.style.fontSize = '';
+    const face = el.parentElement;
+    if (!face) continue;
+    const cs = getComputedStyle(face);
+    const maxW = face.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const maxH = face.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    if (maxW <= 0 || maxH <= 0) continue;
+    let size = parseFloat(getComputedStyle(el).fontSize);
+    for (let i = 0; i < 20 && (el.scrollWidth > maxW + 0.5 || el.offsetHeight > maxH + 0.5) && size > 6; i++) {
+      size *= 0.9;
+      el.style.fontSize = `${size}px`;
+    }
+  }
 }
 
 function lengthClass(word: string): string {
@@ -43,6 +66,19 @@ export function Board({ game, manifest, showKey, selectable, selected, onSelect,
 
   const front = imageUrl(manifest, 'word-card-front');
 
+  // 단어 맞춤: 그린 직후, 화면 크기가 바뀔 때, 글꼴을 다 받은 뒤
+  const boardRef = useRef<HTMLDivElement>(null);
+  const words = game.cards.map((c) => c.word).join('|');
+  useLayoutEffect(() => {
+    const root = boardRef.current;
+    fitWords(root);
+    if (!root) return;
+    const ro = new ResizeObserver(() => fitWords(root));
+    ro.observe(root);
+    void document.fonts?.ready.then(() => fitWords(root));
+    return () => ro.disconnect();
+  }, [words, large, showKey]);
+
   const move = (e: KeyboardEvent<HTMLDivElement>) => {
     const key = e.key;
     let next: number;
@@ -70,7 +106,7 @@ export function Board({ game, manifest, showKey, selectable, selected, onSelect,
           <span key={r}>{r}</span>
         ))}
       </div>
-      <div className="board" role="group" aria-label="단어판 5×5. 화살표 키로 이동" onKeyDown={move}>
+      <div ref={boardRef} className="board" role="group" aria-label="단어판 5×5. 화살표 키로 이동" onKeyDown={move}>
         {game.cards.map((card) => {
           const r = card.revealed;
           const can = !r && selectable(card);

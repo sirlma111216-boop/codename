@@ -29,14 +29,16 @@ async function humanOperativeStep(p: Player): Promise<boolean> {
   if (await page.locator('.finish, .finish-mini').isVisible().catch(() => false)) return true;
   const end = page.getByRole('button', { name: '추측 끝내기' });
   if (await end.isVisible().catch(() => false)) {
+    // 게임이 끝나는 순간 결과 창이 카드를 덮을 수 있다: 클릭이 끝없이 기다리지 않게 짧게 끊는다
+    const quick = { timeout: 3000 };
     if (await end.isEnabled()) {
-      await end.click();
+      await end.click(quick).catch(() => {});
       return false;
     }
     const card = page.locator('.board .card:not(.revealed)').first();
-    await card.click();
-    await card.click();
-    await page.getByRole('dialog').getByRole('button', { name: '확정' }).click();
+    await card.click(quick).catch(() => {});
+    await card.click(quick).catch(() => {});
+    await page.getByRole('dialog').getByRole('button', { name: '확정' }).click(quick).catch(() => {});
     await page.waitForTimeout(300);
     return false;
   }

@@ -40,6 +40,12 @@ body,
   min-height: 100%;
 }
 
+/* iOS 가 가로 화면 등에서 글자를 멋대로 키우지 않게 한다 (카드 단어 넘침 방지) */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   background: var(--navy);
   color: var(--text);
@@ -894,6 +900,8 @@ details summary {
   overflow: hidden;
 }
 .card-word {
+  display: inline-block;
+  max-width: 100%;
   color: var(--ink);
   font-weight: 800;
   line-height: 1.1;
@@ -901,6 +909,14 @@ details summary {
   word-break: keep-all;
   overflow-wrap: anywhere;
   letter-spacing: -0.01em;
+}
+/* 짧은 단어는 절대 두 줄로 쪼개지 않는다 (넘치면 Board 가 글자를 줄인다) */
+.card-word.w-2,
+.card-word.w-3,
+.card-word.w-4,
+.card-word.w-6 {
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 .w-2 {
   font-size: clamp(11px, 26cqi, 42px);

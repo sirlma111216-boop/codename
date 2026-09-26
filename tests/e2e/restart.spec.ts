@@ -89,6 +89,8 @@ test('서버 재시작 뒤에도 같은 게임 상태로 복귀한다', async ({
     await expect(op.page.locator('.board .card.revealed')).toHaveCount(1);
 
     await sm.page.reload();
+    // 새로고침 직후에는 판이 아직 그려지지 않았을 수 있다: 단어가 다 나올 때까지 기다린다
+    await expect(sm.page.locator('.board .card .card-word')).toHaveCount(words.length);
     await dismissBriefing(sm);
     expect(await sm.page.locator('.board .card .card-word').allTextContents()).toEqual(words);
     // 키를 다시 뽑지 않았다 (공개된 1장은 덮개가 올라가 키 표시가 없으므로 나머지 24장을 비교)

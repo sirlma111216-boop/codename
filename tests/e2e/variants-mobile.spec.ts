@@ -104,3 +104,37 @@ test('모바일 360px: 5열 유지, 가로 스크롤 없음, 단어 잘림 없�
   await op.page.getByRole('dialog').getByRole('button', { name: '취소' }).click();
   for (const p of players) await p.context.close();
 });
+
+test('아이폰 크기 + 브라우저 글자 크기 확대: 카드 단어가 쪼개지거나 카드 밖으로 넘치지 않는다', async ({ browser }) => {
+  const me = await newPlayer(browser, '아이폰', { width: 390, height: 844 });
+  await me.page.goto('/');
+  await me.page.getByRole('button', { name: /혼자서 플레이/ }).click();
+  const dlg = me.page.getByRole('dialog');
+  await dlg.getByLabel('닉네임').fill(me.name);
+  await dlg.getByText('천천히', { exact: true }).click();
+  await dlg.getByRole('button', { name: '시작', exact: true }).click();
+  await expect(me.page.locator('.board .card')).toHaveCount(25);
+  await dismissBriefing(me);
+  // 카카오톡 인앱 ‘가가’·사파리 텍스트 크기처럼 글자만 약 2배 키운다 — 신고된 화면(‘외계/인’, ‘플라스/틱’으로 쪼개짐)과 비슷한 크기 (카드 크기는 그대로)
+  await me.page.addStyleTag({
+    content: `.board .card-word.w-2{font-size:52cqi}.board .card-word.w-3{font-size:44cqi}.board .card-word.w-4{font-size:36cqi}.board .card-word.w-6{font-size:26cqi}.board .card-word.w-9{font-size:21cqi}.board .card-word.w-long{font-size:18cqi}`,
+  });
+  await me.page.setViewportSize({ width: 391, height: 844 }); // 다시 맞추기(ResizeObserver)
+  await me.page.waitForTimeout(300);
+  const bad = await me.page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('.board .card-word')]
+      .map((w) => {
+        const face = (w.parentElement as HTMLElement).getBoundingClientRect();
+        const r = w.getBoundingClientRect();
+        // 줄 수: 글자 높이로 나눈 값 (inline 이든 inline-block 이든 같게 잰다)
+        const lines = Math.round(r.height / (parseFloat(getComputedStyle(w).fontSize) * 1.1)) || w.getClientRects().length;
+        const short = [...(w.textContent ?? '')].length <= 6;
+        const outside = r.left < face.left - 1 || r.right > face.right + 1 || r.top < face.top - 1 || r.bottom > face.bottom + 1 || w.scrollWidth > w.clientWidth + 1;
+        return { word: w.textContent, outside, split: short && lines > 1 };
+      })
+      .filter((x) => x.outside || x.split),
+  );
+  await me.page.screenshot({ path: 'test-results/mobile-text-zoom.png' });
+  expect(bad).toEqual([]);
+  await me.context.close();
+});
