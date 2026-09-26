@@ -12,6 +12,7 @@ import type { ClassSend } from './Class.tsx';
 import { Chat } from './Chat.tsx';
 import { ClassRoomLobby } from './ClassRoomLobby.tsx';
 import type { SendFn } from './Room.tsx';
+import { QrCode } from './Qr.tsx';
 import { RulesContent } from './Rules.tsx';
 
 export function Lobby({ room, send, conn, classSend }: { room: RoomView; send: SendFn; conn: RoomConnection; classSend: ClassSend }) {
@@ -23,6 +24,7 @@ function StandaloneLobby({ room, send, conn }: { room: RoomView; send: SendFn; c
   const manifest = useManifest();
   const toast = useToast();
   const [help, setHelp] = useState(false);
+  const [qr, setQr] = useState(false);
   const me = room.members.find((m) => m.id === room.you.memberId);
   const isHost = room.you.isHost;
   const ruleset = room.settings.rulesetId;
@@ -60,6 +62,11 @@ function StandaloneLobby({ room, send, conn }: { room: RoomView; send: SendFn; c
               초대 링크 복사
             </button>
           )}
+          {!solo && (
+            <button type="button" className="btn btn-small" onClick={() => setQr(true)}>
+              QR 크게 보기
+            </button>
+          )}
           <button type="button" className="icon-btn" onClick={() => setHelp(true)} aria-label="규칙 도움말" title="규칙 도움말">
             ?
           </button>
@@ -81,6 +88,12 @@ function StandaloneLobby({ room, send, conn }: { room: RoomView; send: SendFn; c
           <section className="panel invite-panel" aria-label="초대">
             <h2>초대</h2>
             <p className="muted small">이 링크를 받은 사람만 들어올 수 있습니다. 공개 방 목록은 없습니다. 사람이 모자라면 아래에서 봇을 넣을 수 있습니다.</p>
+            <div className="invite-qr">
+              <button type="button" className="qr-thumb" onClick={() => setQr(true)} aria-label="초대 QR 코드 크게 보기">
+                <QrCode text={link} size={132} label="게임방 초대 QR 코드" />
+              </button>
+              <p className="small">휴대폰 카메라로 QR 을 찍으면 바로 들어올 수 있습니다. 닉네임만 입력하면 됩니다.</p>
+            </div>
             <input className="invite-input" readOnly value={link} onFocus={(e) => e.currentTarget.select()} aria-label="초대 링크" />
             <p className="muted small">방은 {room.ttlHours}시간 동안 아무 활동이 없으면 자동으로 정리됩니다.</p>
           </section>
@@ -233,6 +246,15 @@ function StandaloneLobby({ room, send, conn }: { room: RoomView; send: SendFn; c
       {help && (
         <Modal title="규칙 도움말" onClose={() => setHelp(false)} wide>
           <RulesContent />
+        </Modal>
+      )}
+      {qr && (
+        <Modal title="게임방 초대" onClose={() => setQr(false)} wide>
+          <div className="qr-box">
+            <QrCode text={link} size={320} label="게임방 초대 QR 코드" />
+            <p className="invite-text">{link}</p>
+            <p className="muted small">휴대폰 카메라(또는 카카오톡 QR 스캔)로 찍고 닉네임만 입력하면 됩니다. 방장이 ‘초대 링크 새로 만들기’를 하면 이 QR 은 더 이상 쓸 수 없습니다.</p>
+          </div>
         </Modal>
       )}
     </main>

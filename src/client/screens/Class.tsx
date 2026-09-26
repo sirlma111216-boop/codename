@@ -3,7 +3,6 @@
 // 방장 승인 → 방 안에서 팀·역할·준비 → 각 방 독립 진행 → 결과 → 클래스 복귀.
 // 클래스 화면에는 방의 공개 요약만 있다. 단어판·정답·힌트·방 안 토론은 각 게임방 화면에서만 보인다.
 
-import qrcode from 'qrcode-generator';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import type { ClassCommand } from '../../shared/class-protocol.ts';
 import type { ClassMemberView, ClassNoticeKind, ClassRoomView, ClassView } from '../../shared/classroom.ts';
@@ -13,6 +12,7 @@ import { api, ApiError, classInviteLink } from '../api.ts';
 import { ClassConnection, type EndReason } from '../connection.ts';
 import { TEAM_NAME } from '../labels.ts';
 import { useManifest } from '../theme.ts';
+import { QrCode } from './Qr.tsx';
 import { Backdrop, ConnectionOverlay, copyText, Emblem, Modal, navigate, SoundToggle, useToast } from '../ui.tsx';
 
 type Status = 'checking' | 'teacher' | 'member' | 'notMember' | 'gone' | 'banned' | 'ended' | 'noSession' | 'network';
@@ -192,23 +192,6 @@ function ConnectedClass({ classId }: { classId: string }) {
 
 // ================================================================== 교사
 
-function QrCode({ text, size = 240 }: { text: string; size?: number }) {
-  const path = useMemo(() => {
-    const qr = qrcode(0, 'M');
-    qr.addData(text);
-    qr.make();
-    const n = qr.getModuleCount();
-    let d = '';
-    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (qr.isDark(y, x)) d += `M${x + 4},${y + 4}h1v1h-1z`;
-    return { d, n };
-  }, [text]);
-  return (
-    <svg className="qr" width={size} height={size} viewBox={`0 0 ${path.n + 8} ${path.n + 8}`} role="img" aria-label="수업 초대 QR 코드" shapeRendering="crispEdges">
-      <rect width="100%" height="100%" fill="#fff" />
-      <path d={path.d} fill="#000" />
-    </svg>
-  );
-}
 
 function TeacherDashboard({ view, send }: { view: ClassView; send: ClassSend }) {
   const manifest = useManifest();
@@ -422,7 +405,7 @@ function TeacherDashboard({ view, send }: { view: ClassView; send: ClassSend }) 
       {qr && (
         <Modal title="수업 초대" onClose={() => setQr(false)} wide>
           <div className="qr-box">
-            <QrCode text={link} size={320} />
+            <QrCode text={link} size={320} label="수업 초대 QR 코드" />
             <p className="qr-name">{view.name}</p>
             <p className="invite-text">{link}</p>
             <p className="muted small">학생은 휴대폰 카메라로 QR 을 찍거나 링크를 열고 닉네임만 입력하면 됩니다.</p>

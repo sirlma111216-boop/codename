@@ -1945,3 +1945,17 @@ details summary {
     grid-template-columns: 1fr;
   }
 }
+.invite-qr {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.qr-thumb {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  line-height: 0;
+  flex: none;
+}
